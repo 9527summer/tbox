@@ -74,9 +74,9 @@ public class TracerWebInterceptor implements HandlerInterceptor {
             response.addHeader(HEADER_SPAN_ID, context.getSpanId());
             
             // 如果是调试模式并且需要打印请求内容
-            if (log.isDebugEnabled() && properties.isPrintPayload()) {
-                logRequest(request);
-            }
+//            if (log.isDebugEnabled() && properties.isPrintPayload()) {
+//                logRequest(request);
+//            }
             
             // 发送请求开始事件到度量收集器
             if (handler instanceof HandlerMethod) {
