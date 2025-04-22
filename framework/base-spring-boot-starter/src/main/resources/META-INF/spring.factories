@@ -1,0 +1,5 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+org.tbox.base.core.config.BaseAutoConfiguration,\
+org.tbox.base.core.exception.config.ExceptionHandlerAutoConfiguration,\
+org.tbox.base.lock.config.LockAutoConfiguration
+

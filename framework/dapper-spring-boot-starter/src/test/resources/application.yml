@@ -1,0 +1,34 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: dapper-test
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      application: ${spring.application.name}
+  endpoint:
+    health:
+      show-details: always
+
+tbox:
+  dapper:
+    enabled: true
+    log-enabled: true
+    metrics-enabled: true
+    applicationName: ${spring.application.name}
+    web-interceptor-enabled: true
+    http-client-interceptor-enabled: true
+    async-interceptor-enabled: true
+    scheduler-interceptor-enabled: true
+    include-path-patterns: /**
+    exclude-path-patterns: /actuator/** 
