@@ -2,19 +2,41 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>org.tbox</groupId>
+        <groupId>io.github.9527summer</groupId>
         <artifactId>tbox-all</artifactId>
-        <version>1.0.0</version>
+        <version>1.0.1</version>
     </parent>
 
     <artifactId>tbox-framework</artifactId>
     <packaging>pom</packaging>
 
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>leo</name>
+            <email>leo@xxx.com</email>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git://github.com/9527summer/tbox.git</connection>
+        <developerConnection>scm:git:ssh://github.com:9527summer/tbox.git</developerConnection>
+        <url>https://github.com/9527summer/tbox</url>
+    </scm>
+
     <modules>
-        <module>idempotent-spring-boot-starter</module>
-        <module>base-spring-boot-starter</module>
+        <module>tbox-idempotent-spring-boot-starter</module>
+        <module>tbox-base-spring-boot-starter</module>
         <module>tbox-all-spring-boot-starter</module>
-        <module>dapper-spring-boot-starter</module>
+        <module>tbox-dapper-spring-boot-starter</module>
+        <module>tbox-distributedid-spring-boot-starter</module>
     </modules>
 
     <properties>
@@ -49,20 +71,26 @@
 
             <!-- 添加子模块依赖管理 -->
             <dependency>
-                <groupId>org.tbox</groupId>
-                <artifactId>base-spring-boot-starter</artifactId>
+                <groupId>io.github.9527summer</groupId>
+                <artifactId>tbox-base-spring-boot-starter</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
-                <groupId>org.tbox</groupId>
-                <artifactId>idempotent-spring-boot-starter</artifactId>
+                <groupId>io.github.9527summer</groupId>
+                <artifactId>tbox-idempotent-spring-boot-starter</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
-                <groupId>org.tbox</groupId>
-                <artifactId>dapper-spring-boot-starter</artifactId>
+                <groupId>io.github.9527summer</groupId>
+                <artifactId>tbox-dapper-spring-boot-starter</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.github.9527summer</groupId>
+                <artifactId>tbox-distributedid-spring-boot-starter</artifactId>
                 <version>${project.version}</version>
             </dependency>
         </dependencies>
@@ -74,6 +102,12 @@
             <plugins>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-clean-plugin</artifactId>
+                    <version>3.2.0</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>${maven-compiler-plugin.version}</version>
                     <configuration>
@@ -81,6 +115,32 @@
                         <target>${java.version}</target>
                         <encoding>${project.build.sourceEncoding}</encoding>
                     </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-source-plugin</artifactId>
+                    <version>3.3.1</version>
+                    <executions>
+                        <execution>
+                            <id>attach-sources</id>
+                            <goals>
+                                <goal>jar-no-fork</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>3.10.0</version>
+                    <executions>
+                        <execution>
+                            <id>attach-javadocs</id>
+                            <goals>
+                                <goal>jar</goal>
+                            </goals>
+                        </execution>
+                    </executions>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -95,9 +155,9 @@
                         <!-- 包含所有子模块到聚合jar中 -->
                         <artifactSet>
                             <includes>
-                                <include>org.tbox:base-spring-boot-starter</include>
-                                <include>org.tbox:idempotent-spring-boot-starter</include>
-                                <include>org.tbox:dapper-spring-boot-starter</include>
+                                <include>io.github.9527summer:tbox-base-spring-boot-starter</include>
+                                <include>io.github.9527summer:idempotent-spring-boot-starter</include>
+                                <include>io.github.9527summer:tbox-dapper-spring-boot-starter</include>
                             </includes>
                         </artifactSet>
                         <filters>
@@ -127,7 +187,75 @@
                 </plugin>
             </plugins>
         </pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>flatten-maven-plugin</artifactId>
+                <version>1.6.0</version>
+                <configuration>
+                    <updatePomFile>true</updatePomFile>
+                    <!-- ✅ 正确：使用 bom 模式会自动处理依赖版本 -->
+                    <flattenMode>bom</flattenMode>
+
+                    <!-- ✅ 正确：pomElements 仅控制顶层元素，不包括 licenses/scm -->
+                    <!-- 移除所有错误的子元素配置 -->
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>flatten</id>
+                        <phase>validate</phase>
+                        <goals><goal>flatten</goal></goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <!-- GPG -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>3.2.5</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                                <configuration>
+                                    <pinentryMode>loopback</pinentryMode>
+                                    <useAgent>false</useAgent>
+                                    <keyname>3C5E2AB652A73AAD</keyname>
+
+                                    <!-- 可选：如果需要额外的 GPG 命令行参数 -->
+                                    <gpgArguments>
+                                        <arg>--no-tty</arg>
+                                    </gpgArguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <!-- Sonatype Central -->
+                    <plugin>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <version>0.6.0</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <publishingServerId>central</publishingServerId>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
 
 </project>

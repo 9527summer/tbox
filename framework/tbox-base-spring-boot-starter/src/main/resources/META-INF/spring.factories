@@ -1,0 +1,5 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+org.tbox.base.core.config.BaseAutoConfiguration,\
+org.tbox.base.lock.config.RedissonLockAutoConfiguration,\
+org.tbox.base.lock.config.RedisTemplateLockAutoConfiguration
+

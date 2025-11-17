@@ -2,7 +2,7 @@ package com.example.tboxdemo.service;
 
 import com.example.tboxdemo.entity.User;
 import com.example.tboxdemo.mapper.UserMapper;
-import com.github.pagehelper.PageHelper;
+//import com.github.pagehelper.PageHelper;
 import org.springframework.stereotype.Service;
 import org.tbox.base.core.exception.BizException;
 import org.tbox.base.core.utils.AssertUtils;
@@ -21,7 +21,7 @@ public class UserService {
     
     // 分页查询所有用户
     public List<User> findAllUsers(int pageNum, int pageSize) {
-        PageHelper.startPage(pageNum, pageSize);
+//        PageHelper.startPage(pageNum, pageSize);
         return userMapper.findAll();
     }
     
