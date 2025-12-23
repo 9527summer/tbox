@@ -3,8 +3,8 @@ package com.example.tboxdemo.controller;
 import org.springframework.web.bind.annotation.*;
 import org.tbox.base.core.response.Result;
 import org.tbox.base.core.response.Results;
-import org.tbox.idempotent.annotation.Idempotent;
-import org.tbox.idempotent.enums.IdempotentTypeEnum;
+//import org.tbox.idempotent.annotation.Idempotent;
+//import org.tbox.idempotent.enums.IdempotentTypeEnum;
 
 import java.util.UUID;
 
@@ -26,7 +26,6 @@ public class OrderController {
      * 4. 如果幂等ID不存在，则正常处理业务逻辑
      */
     @PostMapping("/param")
-    @Idempotent
     public Result<String> createOrderWithParamIdempotent(@RequestBody OrderRequest request) throws InterruptedException {
         // 模拟订单创建逻辑
         Thread.sleep(5000);
@@ -44,7 +43,6 @@ public class OrderController {
      * 4. 如果幂等ID不存在，则正常处理业务逻辑
      */
     @PostMapping("/spel")
-    @Idempotent
     public Result<String> createOrderWithSpelIdempotent(@RequestBody OrderRequest request) {
         // 模拟订单创建逻辑
         String orderId = UUID.randomUUID().toString();

@@ -10,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tbox.dapper.context.TraceContext;
 import org.tbox.dapper.core.TracerConstants;
-import org.tbox.dapper.core.TracerMetricsCollector;
 import org.tbox.dapper.config.TracerProperties;
 
 import java.io.IOException;
@@ -30,14 +29,12 @@ public class TracerHttpClientInterceptor {
     private static final String CONTEXT_TRACE_CONTEXT = "tbox.tracer.context";
     
     private final TracerProperties properties;
-    private final TracerMetricsCollector metricsCollector;
-    
+
     // 存储进行中的请求，用于异常情况下的清理（key为HttpContext hashCode）
     private final ConcurrentHashMap<Integer, TraceContext> activeRequests = new ConcurrentHashMap<>();
     
-    public TracerHttpClientInterceptor(TracerProperties properties, TracerMetricsCollector metricsCollector) {
+    public TracerHttpClientInterceptor(TracerProperties properties) {
         this.properties = properties;
-        this.metricsCollector = metricsCollector;
     }
     
     /**
@@ -88,14 +85,6 @@ public class TracerHttpClientInterceptor {
                     context.setAttribute(CONTEXT_START_TIME, System.currentTimeMillis());
                     context.setAttribute(CONTEXT_TRACE_CONTEXT, traceContext);
                     activeRequests.put(context.hashCode(), traceContext);
-                    
-                    // 记录请求开始
-                    metricsCollector.recordRequestStart(
-                            method, 
-                            url, 
-                            TracerConstants.CLIENT_TYPE_HTTP_CLIENT, 
-                            url
-                    );
                 } else {
                     log.debug("No active trace context found for HttpClient request to: {}", url);
                 }
@@ -124,18 +113,7 @@ public class TracerHttpClientInterceptor {
                     long duration = System.currentTimeMillis() - startTime;
                     int statusCode = response.getStatusLine() != null ? response.getStatusLine().getStatusCode() : -1;
                     boolean hasException = statusCode >= 400;
-                    
-                    // 记录请求结束
-                    metricsCollector.recordRequestEnd(
-                            method,
-                            url,
-                            TracerConstants.CLIENT_TYPE_HTTP_CLIENT,
-                            url,
-                            statusCode,
-                            duration,
-                            hasException
-                    );
-                    
+
                     if (log.isDebugEnabled()) {
                         log.debug("HttpClient request completed: url={}, status={}, duration={}ms, hasError={}",
                                 url, statusCode, duration, hasException);

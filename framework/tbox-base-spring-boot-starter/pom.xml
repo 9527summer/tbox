@@ -4,7 +4,7 @@
     <parent>
         <groupId>io.github.9527summer</groupId>
         <artifactId>tbox-framework</artifactId>
-        <version>1.0.1</version>
+        <version>${reversion}</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -76,7 +76,8 @@
 
         <dependency>
             <groupId>org.redisson</groupId>
-            <artifactId>redisson-spring-boot-starter</artifactId>
+            <artifactId>redisson</artifactId>
+            <version>3.24.0</version>
             <optional>true</optional>
         </dependency>
 
@@ -93,9 +94,9 @@
         </dependency>
 
         <dependency>
-            <groupId>com.github.pagehelper</groupId>
-            <artifactId>pagehelper-spring-boot-starter</artifactId>
-            <version>1.4.6</version>
+            <groupId>com.github.xiaoymin</groupId>
+            <artifactId>knife4j-openapi3-spring-boot-starter</artifactId>
+            <version>4.5.0</version>
         </dependency>
     </dependencies>
 

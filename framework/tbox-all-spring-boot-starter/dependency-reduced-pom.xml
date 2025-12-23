@@ -4,7 +4,7 @@
   <groupId>io.github.9527summer</groupId>
   <artifactId>tbox-all-spring-boot-starter</artifactId>
   <name>tbox-all-spring-boot-starter</name>
-  <version>1.0.1</version>
+  <version>1.0.4</version>
   <description>All Spring Boot Starter for TBox Framework</description>
   <url>https://github.com/9527summer/tbox</url>
   <developers>
@@ -28,13 +28,13 @@
     <dependency>
       <groupId>io.github.9527summer</groupId>
       <artifactId>tbox-idempotent-spring-boot-starter</artifactId>
-      <version>1.0.1</version>
+      <version>1.0.4</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>io.github.9527summer</groupId>
       <artifactId>tbox-distributedid-spring-boot-starter</artifactId>
-      <version>1.0.1</version>
+      <version>1.0.4</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -61,6 +61,7 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <redisson.version>3.21.3</redisson.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <reversion>1.0.4</reversion>
     <maven.compiler.source>1.8</maven.compiler.source>
   </properties>
 </project>

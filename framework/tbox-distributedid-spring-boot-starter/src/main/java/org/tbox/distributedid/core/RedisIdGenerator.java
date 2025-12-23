@@ -27,10 +27,10 @@ public class RedisIdGenerator extends SnowflakeIdGenerator implements Initializi
 
     @Override
     WorkIdInfo getWordIdInfo() {
-        DefaultRedisScript redisScript = new DefaultRedisScript();
-        redisScript.setScriptSource(new ResourceScriptSource(new ClassPathResource("lua/chooseWorkIdLua.lua")));
         List<Long> luaResultList = null;
         try {
+            DefaultRedisScript redisScript = new DefaultRedisScript();
+            redisScript.setScriptSource(new ResourceScriptSource(new ClassPathResource("lua/chooseWorkIdLua.lua")));
             redisScript.setResultType(List.class);
             luaResultList = (ArrayList) this.redisTemplate.execute(redisScript, Collections.singletonList(HASH_KEY));
         } catch (Exception ex) {

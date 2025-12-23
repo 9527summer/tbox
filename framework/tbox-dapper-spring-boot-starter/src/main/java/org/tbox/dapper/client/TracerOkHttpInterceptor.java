@@ -7,7 +7,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tbox.dapper.context.TraceContext;
 import org.tbox.dapper.core.TracerConstants;
-import org.tbox.dapper.core.TracerMetricsCollector;
 import org.tbox.dapper.config.TracerProperties;
 
 import java.io.IOException;
@@ -20,11 +19,9 @@ public class TracerOkHttpInterceptor implements Interceptor {
     private static final Logger log = LoggerFactory.getLogger(TracerOkHttpInterceptor.class);
     
     private final TracerProperties properties;
-    private final TracerMetricsCollector metricsCollector;
-    
-    public TracerOkHttpInterceptor(TracerProperties properties, TracerMetricsCollector metricsCollector) {
+
+    public TracerOkHttpInterceptor(TracerProperties properties) {
         this.properties = properties;
-        this.metricsCollector = metricsCollector;
     }
     
     @Override
@@ -58,13 +55,7 @@ public class TracerOkHttpInterceptor implements Interceptor {
                         context.getTraceId(), context.getSpanId(), url);
             }
             
-            // 记录请求开始
-            metricsCollector.recordRequestStart(
-                    method, 
-                    url, 
-                    TracerConstants.CLIENT_TYPE_OKHTTP, 
-                    url
-            );
+
         } else {
             log.debug("No active trace context found for OkHttp request to: {}", url);
         }
@@ -86,18 +77,6 @@ public class TracerOkHttpInterceptor implements Interceptor {
             if (context != null) {
                 long duration = System.currentTimeMillis() - startTime;
                 int statusCode = response != null ? response.code() : -1;
-                
-                // 记录请求结束
-                metricsCollector.recordRequestEnd(
-                        method,
-                        url,
-                        TracerConstants.CLIENT_TYPE_OKHTTP,
-                        url,
-                        statusCode,
-                        duration,
-                        hasException
-                );
-                
                 if (log.isDebugEnabled()) {
                     log.debug("OkHttp request completed: url={}, status={}, duration={}ms, hasError={}",
                             url, statusCode, duration, hasException);

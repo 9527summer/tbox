@@ -3,5 +3,4 @@ org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
 org.tbox.dapper.config.TracerAutoConfiguration,\
 org.tbox.dapper.concurrent.TracingThreadPoolAutoConfiguration,\
 org.tbox.dapper.mq.TracingMQAutoConfiguration,\
-org.tbox.dapper.scheduler.xxljob.XxlJobTracerAutoConfiguration,\
-org.tbox.dapper.scheduler.spring.SpringSchedulerAutoConfiguration 
+org.tbox.dapper.scheduler.TracingSchedulerAutoConfiguration

@@ -32,10 +32,6 @@ public class TracerProperties {
      */
     private int maxResponseLength = 2048;
     
-    /**
-     * 是否暴露追踪指标到Actuator
-     */
-    private boolean exposeMetrics = false;
 
     /**
      * 用户添加的额外排除路径
@@ -78,15 +74,7 @@ public class TracerProperties {
     public void setMaxResponseLength(int maxResponseLength) {
         this.maxResponseLength = maxResponseLength;
     }
-    
-    public boolean isExposeMetrics() {
-        return exposeMetrics;
-    }
-    
-    public void setExposeMetrics(boolean exposeMetrics) {
-        this.exposeMetrics = exposeMetrics;
-    }
-    
+
     /**
      * 获取用户配置的额外排除路径
      */

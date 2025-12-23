@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>io.github.9527summer</groupId>
     <artifactId>tbox-all</artifactId>
-    <version>1.0.1</version>
+    <version>${reversion}</version>
     <packaging>pom</packaging>
     <name>tbox</name>
     <description>一个开箱即用的脚手架</description>
@@ -23,6 +23,7 @@
         <!--指定Java版本-->
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
+        <reversion>1.0.4</reversion>
     </properties>
 
 

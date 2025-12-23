@@ -1,2 +1,2 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-org.tbox.distributedid.config.DistributedIdAutoConfiguration 
+org.tbox.distributedid.config.IdGeneratorAutoConfiguration

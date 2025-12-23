@@ -2,6 +2,7 @@ package org.tbox.base.core.exception.handler;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
@@ -9,6 +10,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -20,11 +22,12 @@ import org.tbox.base.core.exception.BizException;
 import org.tbox.base.core.exception.RepeatConsumptionException;
 import org.tbox.base.core.exception.SysException;
 import org.tbox.base.core.response.Result;
+import org.tbox.base.core.response.Results;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.ConstraintViolationException;
 import java.util.StringJoiner;
 
-//@RestControllerAdvice
 public class DefaultGlobalExceptionHandler {
     private static final Logger log = LoggerFactory.getLogger(DefaultGlobalExceptionHandler.class);
 
@@ -67,6 +70,42 @@ public class DefaultGlobalExceptionHandler {
         return buildErrorResponse(
                 e.getErrCode() != null ? e.getErrCode() : StandardErrorCodeEnum.REPEAT_CONSUMER_ERROR.getCode(),
                 e.getMessage(),
+                request
+        );
+    }
+
+    /**
+     * 处理参数校验异常（@Valid注解校验失败）
+     */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Result<Void> handleMethodArgumentNotValidException(MethodArgumentNotValidException e, HttpServletRequest request) {
+        String message = e.getBindingResult().getFieldErrors().stream()
+                .findFirst()
+                .map(fieldError -> fieldError.getField() + ": " + fieldError.getDefaultMessage())
+                .orElse("参数验证失败");
+        log.warn("参数校验异常: {}, URL: {}", message, request.getRequestURI());
+        return buildErrorResponse(
+                StandardErrorCodeEnum.PARAMETER_ERROR.getCode(),
+                message,
+                request
+        );
+    }
+
+    /**
+     * 处理参数校验异常（@Validated注解校验失败）
+     */
+    @ExceptionHandler(ConstraintViolationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Result<Void> handleConstraintViolationException(ConstraintViolationException e, HttpServletRequest request) {
+        String message = e.getConstraintViolations().stream()
+                .findFirst()
+                .map(violation -> violation.getPropertyPath() + ": " + violation.getMessage())
+                .orElse("参数验证失败");
+        log.warn("参数校验异常: {}, URL: {}", message, request.getRequestURI());
+        return buildErrorResponse(
+                StandardErrorCodeEnum.PARAMETER_ERROR.getCode(),
+                message,
                 request
         );
     }
@@ -197,11 +236,6 @@ public class DefaultGlobalExceptionHandler {
      * 构建错误响应
      */
     private Result<Void> buildErrorResponse(String code, String message, HttpServletRequest request) {
-        Result<Void> result = new Result<>();
-        result.setCode(code);
-        result.setText(message);
-        // 如果有日志追踪系统，可以设置requestId
-        // result.setRequestId(MDC.get("traceId"));
-        return result;
+        return Results.failure(code, message);
     }
 }

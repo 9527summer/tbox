@@ -3,7 +3,7 @@ package com.example.tboxdemo.controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.tbox.distributedid.utils.IdUtils;
+//import org.tbox.distributedid.utils.IdUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -30,10 +30,10 @@ public class IdTestController {
     @GetMapping("/next")
     public Map<String, Object> nextId() {
         Map<String, Object> result = new HashMap<>();
-
-        long id = IdUtils.nextId();
-        result.put("id", id);
-        result.put("time", System.currentTimeMillis());
+//
+//        long id = IdUtils.nextId();
+//        result.put("id", id);
+//        result.put("time", System.currentTimeMillis());
 
         return result;
     }
@@ -45,9 +45,9 @@ public class IdTestController {
     public Map<String, Object> nextIdStr() {
         Map<String, Object> result = new HashMap<>();
 
-        String id = IdUtils.nextIdStr();
-        result.put("id", id);
-        result.put("time", System.currentTimeMillis());
+//        String id = IdUtils.nextIdStr();
+//        result.put("id", id);
+//        result.put("time", System.currentTimeMillis());
 
         return result;
     }
@@ -59,14 +59,14 @@ public class IdTestController {
     public Map<String, Object> batchIds() {
         Map<String, Object> result = new HashMap<>();
 
-        List<Long> ids = new ArrayList<>();
-        for (int i = 0; i < 10; i++) {
-            ids.add(IdUtils.nextId());
-        }
-
-        result.put("ids", ids);
-        result.put("count", ids.size());
-        result.put("time", System.currentTimeMillis());
+//        List<Long> ids = new ArrayList<>();
+//        for (int i = 0; i < 10; i++) {
+//            ids.add(IdUtils.nextId());
+//        }
+//
+//        result.put("ids", ids);
+//        result.put("count", ids.size());
+//        result.put("time", System.currentTimeMillis());
 
         return result;
     }
@@ -82,7 +82,7 @@ public class IdTestController {
         long startTime = System.currentTimeMillis();
 
         for (int i = 0; i < count; i++) {
-            IdUtils.nextId();
+//            IdUtils.nextId();
         }
 
         long endTime = System.currentTimeMillis();
@@ -126,7 +126,8 @@ public class IdTestController {
             executorService.execute(() -> {
                 try {
                     for (int i = 0; i < idsPerThread; i++) {
-                        long id = IdUtils.nextId();
+//                        long id = IdUtils.nextId();
+                        long id = 0L;
                         // 如果添加失败，说明ID已经存在，是重复的
                         if (!allIds.add(id)) {
                             duplicateIds.add(id);

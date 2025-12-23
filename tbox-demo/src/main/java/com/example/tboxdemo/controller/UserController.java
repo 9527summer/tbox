@@ -1,7 +1,13 @@
 package com.example.tboxdemo.controller;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import com.example.tboxdemo.entity.User;
 import com.example.tboxdemo.service.UserService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -14,20 +20,27 @@ import org.springframework.web.bind.annotation.RestController;
 import org.tbox.base.core.exception.BizException;
 import org.tbox.base.core.response.Result;
 import org.tbox.base.core.response.Results;
+import org.tbox.base.redis.utils.LockUtils;
+import org.tbox.distributedid.utils.IdUtils;
 
+import java.util.Date;
 import java.util.List;
-
+@Tag(name = "用户管理", description = "用户增删改查相关接口")
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
 
     private final UserService userService;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     public UserController(UserService userService) {
         this.userService = userService;
     }
 
     // 分页查询所有用户
+
     @GetMapping
     public Result<List<User>> getAllUsers(
             @RequestParam(defaultValue = "1") int pageNum,
@@ -37,9 +50,19 @@ public class UserController {
     }
 
     // 根据ID查询用户
+    @Operation(summary = "获取用户详情", description = "根据用户ID查询详细信息")
     @GetMapping("/{id}")
     public Result<User> getUserById(@PathVariable Long id) {
-        User user = userService.findUserById(id);
+//        User user = userService.findUserById(id);
+        boolean b = LockUtils.tryLock("123");
+        if(!b){
+            throw new BizException("获取不到");
+        }
+
+        System.out.println(objectMapper.getRegisteredModuleIds());
+        User user = new User();
+        user.setId(IdUtils.nextId());
+        user.setCreateTime(LocalDateTime.now());
         return Results.success(user);
     }
 
@@ -49,6 +72,7 @@ public class UserController {
         User createdUser = userService.createUser(user);
         return Results.success(createdUser);
     }
+
 
     // 更新用户
     @PutMapping("/{id}")

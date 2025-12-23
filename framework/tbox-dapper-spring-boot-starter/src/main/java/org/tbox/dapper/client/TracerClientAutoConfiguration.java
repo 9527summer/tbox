@@ -9,7 +9,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
 import org.tbox.dapper.config.TracerProperties;
-import org.tbox.dapper.core.TracerMetricsCollector;
 
 /**
  * HTTP客户端追踪的自动配置类
@@ -23,15 +22,15 @@ public class TracerClientAutoConfiguration {
      * 配置RestTemplate拦截器
      */
     @Configuration
-    @ConditionalOnClass(RestTemplate.class)
+    @ConditionalOnClass(name = "org.springframework.web.client.RestTemplate")
     public static class RestTemplateConfiguration {
         
         @Bean
         @ConditionalOnMissingBean
         public TracerRestTemplateInterceptor tracerRestTemplateInterceptor(
-                TracerProperties properties, TracerMetricsCollector metricsCollector) {
+                TracerProperties properties) {
             log.debug("创建TracerRestTemplateInterceptor bean");
-            return new TracerRestTemplateInterceptor(properties, metricsCollector);
+            return new TracerRestTemplateInterceptor(properties);
         }
     }
     
@@ -45,9 +44,9 @@ public class TracerClientAutoConfiguration {
         @Bean
         @ConditionalOnMissingBean
         public TracerOkHttpInterceptor tracerOkHttpInterceptor(
-                TracerProperties properties, TracerMetricsCollector metricsCollector) {
+                TracerProperties properties) {
             log.debug("创建TracerOkHttpInterceptor bean");
-            return new TracerOkHttpInterceptor(properties, metricsCollector);
+            return new TracerOkHttpInterceptor(properties);
         }
     }
     
@@ -61,9 +60,9 @@ public class TracerClientAutoConfiguration {
         @Bean
         @ConditionalOnMissingBean
         public TracerHttpClientInterceptor tracerHttpClientInterceptor(
-                TracerProperties properties, TracerMetricsCollector metricsCollector) {
+                TracerProperties properties) {
             log.debug("创建TracerHttpClientInterceptor bean");
-            return new TracerHttpClientInterceptor(properties, metricsCollector);
+            return new TracerHttpClientInterceptor(properties);
         }
     }
 } 

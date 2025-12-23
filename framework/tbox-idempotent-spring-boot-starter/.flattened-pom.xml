@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.github.9527summer</groupId>
   <artifactId>tbox-idempotent-spring-boot-starter</artifactId>
-  <version>1.0.1</version>
+  <version>1.0.4</version>
   <name>tbox-idempotent-spring-boot-starter</name>
   <description>idempotent Spring Boot Starter for TBox Framework</description>
   <url>https://github.com/9527summer/tbox</url>
@@ -35,6 +35,7 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <redisson.version>3.21.3</redisson.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <reversion>1.0.4</reversion>
     <maven.compiler.source>1.8</maven.compiler.source>
   </properties>
   <dependencies>

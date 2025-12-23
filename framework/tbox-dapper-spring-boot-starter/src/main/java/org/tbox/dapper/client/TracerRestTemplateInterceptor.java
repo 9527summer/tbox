@@ -8,7 +8,6 @@ import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
 import org.tbox.dapper.context.TraceContext;
 import org.tbox.dapper.core.TracerConstants;
-import org.tbox.dapper.core.TracerMetricsCollector;
 import org.tbox.dapper.config.TracerProperties;
 
 import java.io.IOException;
@@ -21,11 +20,9 @@ public class TracerRestTemplateInterceptor implements ClientHttpRequestIntercept
     private static final Logger log = LoggerFactory.getLogger(TracerRestTemplateInterceptor.class);
     
     private final TracerProperties properties;
-    private final TracerMetricsCollector metricsCollector;
-    
-    public TracerRestTemplateInterceptor(TracerProperties properties, TracerMetricsCollector metricsCollector) {
+
+    public TracerRestTemplateInterceptor(TracerProperties properties) {
         this.properties = properties;
-        this.metricsCollector = metricsCollector;
     }
     
     @Override
@@ -55,14 +52,7 @@ public class TracerRestTemplateInterceptor implements ClientHttpRequestIntercept
                 log.debug("Added trace headers to RestTemplate request: traceId={}, spanId={}, url={}",
                         context.getTraceId(), context.getSpanId(), url);
             }
-            
-            // 记录请求开始
-            metricsCollector.recordRequestStart(
-                    method, 
-                    url, 
-                    TracerConstants.CLIENT_TYPE_REST_TEMPLATE, 
-                    url
-            );
+
         } else {
             log.debug("No active trace context found for RestTemplate request to: {}", url);
         }
@@ -84,16 +74,7 @@ public class TracerRestTemplateInterceptor implements ClientHttpRequestIntercept
                 long duration = System.currentTimeMillis() - startTime;
                 int statusCode = response != null ? response.getStatusCode().value() : -1;
                 
-                // 记录请求结束
-                metricsCollector.recordRequestEnd(
-                        method,
-                        url,
-                        TracerConstants.CLIENT_TYPE_REST_TEMPLATE,
-                        url,
-                        statusCode,
-                        duration,
-                        hasException
-                );
+
                 
                 if (log.isDebugEnabled()) {
                     log.debug("RestTemplate request completed: url={}, status={}, duration={}ms, hasError={}",

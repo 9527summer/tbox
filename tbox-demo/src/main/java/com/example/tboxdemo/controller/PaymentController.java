@@ -3,8 +3,7 @@ package com.example.tboxdemo.controller;
 import org.springframework.web.bind.annotation.*;
 import org.tbox.base.core.response.Result;
 import org.tbox.base.core.response.Results;
-import org.tbox.idempotent.annotation.Idempotent;
-import org.tbox.idempotent.enums.IdempotentTypeEnum;
+
 
 import java.util.UUID;
 
@@ -26,7 +25,7 @@ public class PaymentController {
      * 4. 如果获取锁失败，则表示重复请求，抛出异常
      */
     @PostMapping
-    @Idempotent
+//    @Idempotent
     public Result<String> createPayment(@RequestBody PaymentRequest request) {
         // 模拟支付创建逻辑 - 这里会有一个30秒的锁，防止重复支付
         try {

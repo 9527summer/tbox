@@ -138,7 +138,7 @@ public class WebTraceAspect {
      * 记录异常
      */
     private void logError(String methodName, Exception e, long executionTime) {
-        log.error("[{}] 接口异常 | 耗时: {}ms | 异常: {}", methodName, executionTime, e.getMessage(), e);
+        log.error("[{}] 接口异常 | 耗时: {}ms | 异常: {}", methodName, executionTime, e.getMessage());
     }
 
     /**

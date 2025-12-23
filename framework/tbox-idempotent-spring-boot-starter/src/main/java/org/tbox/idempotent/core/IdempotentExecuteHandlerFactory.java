@@ -5,6 +5,7 @@ package org.tbox.idempotent.core;
 
 import org.tbox.base.core.context.ApplicationContextHolder;
 import org.tbox.idempotent.core.param.IdempotentParamService;
+import org.tbox.idempotent.core.spel.IdempotentSpelService;
 import org.tbox.idempotent.enums.IdempotentTypeEnum;
 
 /**
@@ -23,6 +24,9 @@ public final class IdempotentExecuteHandlerFactory {
         switch (type){
             case PARAM:
                 result = ApplicationContextHolder.getBean(IdempotentParamService.class);
+            case SPEL:
+                result = ApplicationContextHolder.getBean(IdempotentSpelService.class);
+            default:
         }
         return result;
     }

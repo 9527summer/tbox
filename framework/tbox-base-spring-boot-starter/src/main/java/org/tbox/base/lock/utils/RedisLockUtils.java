@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.util.StringUtils;
-import org.tbox.base.cache.utils.RedisUtils;
+import org.tbox.base.redis.utils.RedisUtils;
 
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;

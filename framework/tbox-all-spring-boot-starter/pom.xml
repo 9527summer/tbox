@@ -4,13 +4,12 @@
     <parent>
         <groupId>io.github.9527summer</groupId>
         <artifactId>tbox-framework</artifactId>
-        <version>1.0.1</version>
+        <version>${reversion}</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>tbox-all-spring-boot-starter</artifactId>
     <packaging>jar</packaging>
-    <version>1.0.1</version>
 
     <name>tbox-all-spring-boot-starter</name>
     <description>All Spring Boot Starter for TBox Framework</description>

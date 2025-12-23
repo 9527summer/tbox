@@ -268,8 +268,23 @@ tbox:
 1. 配置`logback-spring.xml`：
 
 ```xml
+异常堆栈需要traceId可选
+<conversionRule conversionWord="traceStack"
+                converterClass="org.tbox.dapper.logback.TraceIdThrowableProxyConverter"/>
+
 <property name="CONSOLE_LOG_PATTERN"
-          value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{traceId}] [%X{spanId}] %-5level %logger{36} - %msg%n"/>
+          value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{traceId}] [%X{spanId}] %-5level %logger{36} - %msg%n %traceStack"/>
+```
+
+2. 异常堆栈增加traceId
+
+```xml
+
+<conversionRule conversionWord="traceStack"
+                converterClass="org.tbox.dapper.logback.TraceIdThrowableProxyConverter"/>
+
+<property name="CONSOLE_LOG_PATTERN"
+          value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{traceId}] [%X{spanId}] %-5level %logger{36} - %msg%n %traceStack"/>
 ```
 
 ### 与Prometheus和Grafana集成

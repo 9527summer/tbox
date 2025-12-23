@@ -4,7 +4,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.tbox.distributedid.utils.IdUtils;
+//import org.tbox.distributedid.utils.IdUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -84,7 +84,8 @@ public class IdConcurrentTestController {
                     long threadStartTime = System.currentTimeMillis();
                     
                     for (int i = 0; i < idsPerThread; i++) {
-                        long id = IdUtils.nextId();
+//                        long id = IdUtils.nextId();
+                        long id = 0L;
                         generatedCount.incrementAndGet();
                         
                         // 如果添加失败，说明ID已经存在，是重复的
@@ -198,7 +199,8 @@ public class IdConcurrentTestController {
         try {
             // 第一阶段：生成一些ID
             for (int i = 0; i < 5; i++) {
-                generatedIds.add(IdUtils.nextId());
+//                generatedIds.add(IdUtils.nextId());
+//                generatedIds.add(IdUtils.nextId());
             }
             
             // 等待一段时间，模拟时间流逝
@@ -206,7 +208,7 @@ public class IdConcurrentTestController {
             
             // 第二阶段：再生成一些ID
             for (int i = 0; i < 5; i++) {
-                generatedIds.add(IdUtils.nextId());
+//                generatedIds.add(IdUtils.nextId());
             }
             
             // 检查生成的ID是否严格递增
@@ -241,7 +243,7 @@ public class IdConcurrentTestController {
         
         long startTime = System.currentTimeMillis();
         for (int i = 0; i < count; i++) {
-            idSet.add(IdUtils.nextId());
+//            idSet.add(IdUtils.nextId());
         }
         long endTime = System.currentTimeMillis();
         
