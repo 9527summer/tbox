@@ -122,7 +122,7 @@
         <dependency>
             <groupId>io.github.9527summer</groupId>
             <artifactId>tbox-base-spring-boot-starter</artifactId>
-            <version>${version}</version>
+            <version>${reversion}</version>
         </dependency>
         
         <!-- 测试依赖 -->

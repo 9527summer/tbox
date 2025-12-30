@@ -7,6 +7,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.tbox.distributedid.core.RandomIdGenerator;
 import org.tbox.distributedid.core.RedisIdGenerator;
+import org.tbox.distributedid.core.TimeRandomIdGenerator;
+import org.tbox.distributedid.core.TimeRedisIdGenerator;
 
 @Configuration
 public class IdGeneratorAutoConfiguration {
@@ -18,6 +20,12 @@ public class IdGeneratorAutoConfiguration {
         public RandomIdGenerator defaultIdGenerator() {
             return new RandomIdGenerator();
         }
+
+        @Bean
+        @ConditionalOnMissingBean(TimeRedisIdGenerator.class)
+        public TimeRandomIdGenerator timeRandomIdGenerator() {
+            return new TimeRandomIdGenerator();
+        }
     }
 
 
@@ -26,8 +34,20 @@ public class IdGeneratorAutoConfiguration {
     public static class RedisIdGeneratorConfiguration {
         @Bean
         @ConditionalOnMissingBean
-        public RedisIdGenerator redisIdGenerator(RedisTemplate redisTemplate) {
+        public RedisIdGenerator redisIdGenerator(RedisTemplate<String, Object> redisTemplate) {
             return new RedisIdGenerator(redisTemplate);
         }
+
+        @Bean
+        @ConditionalOnMissingBean
+        public TimeRedisIdGenerator timeRedisIdGenerator(RedisTemplate<String, Object> redisTemplate) {
+            return new TimeRedisIdGenerator(redisTemplate);
+        }
+        
+//        @Bean
+//        @ConditionalOnMissingBean(ReadableRedisIdGenerator.class)
+//        public ReadableRedisIdGenerator readableRedisIdGenerator(RedisTemplate<String, Object> redisTemplate) {
+//            return new ReadableRedisIdGenerator(redisTemplate);
+//        }
     }
 }

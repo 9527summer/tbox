@@ -1,25 +1,22 @@
 package org.tbox.idempotent.config;
 
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
-import org.tbox.base.lock.service.LockService;
 import org.tbox.idempotent.core.IdempotentAspect;
 import org.tbox.idempotent.core.UserIdProvider;
 import org.tbox.idempotent.core.param.IdempotentParamExecuteHandler;
 import org.tbox.idempotent.core.param.IdempotentParamService;
+import org.tbox.idempotent.core.spel.IdempotentSpELExecuteHandler;
+import org.tbox.idempotent.core.spel.IdempotentSpelService;
 
 /**
  * 幂等自动装配
  */
 @EnableConfigurationProperties(IdempotentProperties.class)
 @Import(UserIdProviderConfiguration.class)
-@ConditionalOnClass(LockService.class)
-@ConditionalOnBean(LockService.class)
 public class IdempotentAutoConfiguration {
 
     /**
@@ -35,7 +32,16 @@ public class IdempotentAutoConfiguration {
      */
     @Bean
     @ConditionalOnMissingBean
-    public IdempotentParamService idempotentParamExecuteHandler(LockService lockService, IdempotentProperties idempotentProperties, UserIdProvider userIdProvider) {
-        return new IdempotentParamExecuteHandler(lockService,idempotentProperties,userIdProvider);
+    public IdempotentParamService idempotentParamExecuteHandler(IdempotentProperties idempotentProperties, UserIdProvider userIdProvider) {
+        return new IdempotentParamExecuteHandler(idempotentProperties, userIdProvider);
+    }
+
+    /**
+     * SpEL表达式方式幂等实现，只根据表达式提取的参数值做幂等校验
+     */
+    @Bean
+    @ConditionalOnMissingBean
+    public IdempotentSpelService idempotentSpelExecuteHandler(IdempotentProperties idempotentProperties) {
+        return new IdempotentSpELExecuteHandler(idempotentProperties);
     }
 }

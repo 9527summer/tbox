@@ -53,9 +53,10 @@ public class DefaultGlobalExceptionHandler {
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public Result<Void> handleSysException(SysException e, HttpServletRequest request) {
         log.error("系统异常: {}, URL: {}", e.getMessage(), request.getRequestURI(), e);
+        // 系统异常不向客户端暴露详细信息，避免敏感信息泄露
         return buildErrorResponse(
                 e.getErrCode() != null ? e.getErrCode() : StandardErrorCodeEnum.SYSTEM_ERROR.getCode(),
-                e.getMessage(),
+                "系统异常，请稍后再试",
                 request
         );
     }

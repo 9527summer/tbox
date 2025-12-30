@@ -9,7 +9,7 @@ import java.util.function.Supplier;
 
 public class LockUtils {
     private static final String LOCK_PREFIX = "lock:";
-    private static  RedissonClient redissonClient;
+    private static volatile RedissonClient redissonClient;
 
     private LockUtils() {
         throw new UnsupportedOperationException("Utility class cannot be instantiated");
@@ -18,7 +18,7 @@ public class LockUtils {
 
     private static RedissonClient getClient() {
         if (redissonClient == null) {
-            synchronized (CacheUtils.class) {
+            synchronized (LockUtils.class) {
                 if (redissonClient == null) {
                     redissonClient = ApplicationContextHolder.getBean(RedissonClient.class);
                 }

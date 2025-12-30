@@ -56,7 +56,14 @@
         <dependency>
             <groupId>io.github.9527summer</groupId>
             <artifactId>tbox-base-spring-boot-starter</artifactId>
-            <version>1.0.1</version>
+            <version>${reversion}</version>
+        </dependency>
+
+        <!-- Test dependencies -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
         </dependency>
 
 

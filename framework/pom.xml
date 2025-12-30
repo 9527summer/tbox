@@ -149,6 +149,11 @@
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>3.2.5</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-shade-plugin</artifactId>
                     <version>${maven-shade-plugin.version}</version>
                     <configuration>
@@ -156,8 +161,9 @@
                         <artifactSet>
                             <includes>
                                 <include>io.github.9527summer:tbox-base-spring-boot-starter</include>
-                                <include>io.github.9527summer:idempotent-spring-boot-starter</include>
+                                <include>io.github.9527summer:tbox-idempotent-spring-boot-starter</include>
                                 <include>io.github.9527summer:tbox-dapper-spring-boot-starter</include>
+                                <include>io.github.9527summer:tbox-distributedid-spring-boot-starter</include>
                             </includes>
                         </artifactSet>
                         <filters>

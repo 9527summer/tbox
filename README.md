@@ -18,6 +18,7 @@ TBox是一个轻量级的Java企业应用开发框架，提供开箱即用的脚
 tbox/
 ├── framework/                  # 核心框架模块
 │   ├── base-spring-boot-starter/           # 基础功能模块
+│   ├── tbox-distributedid-spring-boot-starter/ # 分布式ID/兑换码模块
 │   ├── dapper-spring-boot-starter/         # 分布式追踪模块  
 │   ├── idempotent-spring-boot-starter/     # 幂等性控制模块
 │   └── tbox-all-spring-boot-starter/       # 全功能包装模块

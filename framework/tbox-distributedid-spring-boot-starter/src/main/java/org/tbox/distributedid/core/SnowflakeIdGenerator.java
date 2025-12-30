@@ -7,29 +7,32 @@ import org.tbox.distributedid.manage.DefaultIdGenerator;
 
 public abstract class SnowflakeIdGenerator {
 
-    private static final Logger log = LoggerFactory.getLogger(SnowflakeIdGenerator.class);
+    protected static final Logger log = LoggerFactory.getLogger(SnowflakeIdGenerator.class);
 
-    abstract WorkIdInfo getWordIdInfo();
+    /**
+     * NodeId 最大值 (10位二进制，最大1023)
+     */
+    protected static final int NODE_ID_MAX = 1023;
 
-    void init() {
-        WorkIdInfo wordIdInfo = getWordIdInfo();
-        if (wordIdInfo == null) {
-            wordIdInfo = getDefaultWorkIdInfo();
+    protected static final int NODE_ID_MIN = 0;
+
+
+    protected abstract WorkIdInfo getWorkIdInfo();
+    protected void init() {
+        WorkIdInfo workIdInfo = getWorkIdInfo();
+        if (workIdInfo == null || workIdInfo.getNodeId() == null) {
+            throw new IllegalStateException("Failed to allocate Snowflake nodeId");
         }
-        Snowflake snowflake = new Snowflake(wordIdInfo.getDataCenterId(), wordIdInfo.getWorkId());
+        long nodeId = workIdInfo.getNodeId();
+        if (nodeId < NODE_ID_MIN || nodeId > NODE_ID_MAX) {
+            throw new IllegalStateException("Snowflake nodeId out of range: " + nodeId);
+        }
+
+        Snowflake snowflake = new Snowflake(nodeId);
         DefaultIdGenerator.setSnowflake(snowflake);
         if (log.isDebugEnabled()) {
-            log.debug("初始化分布式ID成功，workerId:{},dataCenterId:{}", wordIdInfo.getWorkId(), wordIdInfo.getDataCenterId());
+            log.debug("初始化 Snowflake 成功，nodeId:{}", nodeId);
         }
     }
 
-    private WorkIdInfo getDefaultWorkIdInfo() {
-        int start = 0, end = 31;
-        return new WorkIdInfo(getRandom(start, end), getRandom(start, end));
-    }
-
-    private long getRandom(int start, int end) {
-        long random = (long) (Math.random() * (end - start + 1) + start);
-        return random;
-    }
 }

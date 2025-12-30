@@ -20,91 +20,72 @@ import java.util.Date;
  * <p>
  * 并且可以通过生成的id反推出生成时间,datacenterId和workerId
  * <p>
+ * 说明：
+ * <ul>
+ *   <li>本实现使用 synchronized 保证线程安全，单实例并发会串行；适用于对 QPS 要求不极端的场景。</li>
+ *   <li>时钟回拨在 2 秒内会进行容忍（时间戳被“钉住”到 lastTimestamp），超过 2 秒直接抛异常。</li>
+ * </ul>
+ * <p>
  * 参考：http://www.cnblogs.com/relucent/p/4955340.html
  *
  * @author Looly
  * @since 3.0.1
  */
-public class Snowflake implements Serializable {
+public class Snowflake extends AbstractSnowflake implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private final long twepoch;
-    private final long workerIdBits = 5L;
-    // 最大支持机器节点数0~31，一共32个
-    @SuppressWarnings({"PointlessBitwiseExpression", "FieldCanBeLocal"})
-    private final long maxWorkerId = -1L ^ (-1L << workerIdBits);
-    private final long dataCenterIdBits = 5L;
-    // 最大支持数据中心节点数0~31，一共32个
-    @SuppressWarnings({"PointlessBitwiseExpression", "FieldCanBeLocal"})
-    private final long maxDataCenterId = -1L ^ (-1L << dataCenterIdBits);
+    private final long nodeIdBits = 10L;
+    // 最大支持机器节点数0~1023
+    private final long maxNodeId = -1L ^ (-1L << nodeIdBits);
     // 序列号12位
     private final long sequenceBits = 12L;
     // 机器节点左移12位
-    private final long workerIdShift = sequenceBits;
-    // 数据中心节点左移17位
-    private final long dataCenterIdShift = sequenceBits + workerIdBits;
+    private final long nodeIdShift = sequenceBits;
     // 时间毫秒数左移22位
-    private final long timestampLeftShift = sequenceBits + workerIdBits + dataCenterIdBits;
+    private final long timestampLeftShift = sequenceBits + nodeIdBits;
     // 序列掩码，用于限定序列最大值不能超过4095
     @SuppressWarnings("FieldCanBeLocal")
     private final long sequenceMask = ~(-1L << sequenceBits);// 4095
 
-    private final long workerId;
-    private final long dataCenterId;
+    private final long nodeId;
     private long sequence = 0L;
     private long lastTimestamp = -1L;
 
     /**
      * 构造
      *
-     * @param workerId         终端ID
-     * @param dataCenterId     数据中心ID
+     * @param nodeId 节点ID (0~1023)
      */
-    public Snowflake(long workerId, long dataCenterId) {
-        this(null, workerId, dataCenterId);
+    public Snowflake(long nodeId) {
+        this(null, nodeId);
     }
 
     /**
-     * @param epochDate        初始化时间起点（null表示默认起始日期）,后期修改会导致id重复,如果要修改连workerId dataCenterId，慎用
-     * @param workerId         工作机器节点id
-     * @param dataCenterId     数据中心id
-     * @since 5.1.3
+     * @param epochDate 初始化时间起点（null表示默认起始日期）,后期修改会导致id重复,如果要修改连nodeId，慎用
+     * @param nodeId    节点ID (0~1023)
      */
-    public Snowflake(Date epochDate, long workerId, long dataCenterId) {
+    public Snowflake(Date epochDate, long nodeId) {
         if (null != epochDate) {
             this.twepoch = epochDate.getTime();
-        } else{
+        } else {
             // Thu, 04 Nov 2010 01:42:54 GMT
             this.twepoch = 1288834974657L;
         }
-        if (workerId > maxWorkerId || workerId < 0) {
-            throw new IllegalArgumentException(String.format("worker Id can't be greater than %d or less than 0", maxWorkerId));
+        if (nodeId > maxNodeId || nodeId < 0) {
+            throw new IllegalArgumentException(String.format("node Id can't be greater than %d or less than 0", maxNodeId));
         }
-        if (dataCenterId > maxDataCenterId || dataCenterId < 0) {
-            throw new IllegalArgumentException(String.format("datacenter Id can't be greater than %d or less than 0", maxDataCenterId));
-        }
-        this.workerId = workerId;
-        this.dataCenterId = dataCenterId;
+        this.nodeId = nodeId;
     }
 
     /**
-     * 根据Snowflake的ID，获取机器id
+     * 根据Snowflake的ID，获取节点id
      *
      * @param id snowflake算法生成的id
-     * @return 所属机器的id
+     * @return 所属节点的id
      */
-    public long getWorkerId(long id) {
-        return id >> workerIdShift & ~(-1L << workerIdBits);
-    }
-
-    /**
-     * 根据Snowflake的ID，获取数据中心id
-     *
-     * @param id snowflake算法生成的id
-     * @return 所属数据中心
-     */
-    public long getDataCenterId(long id) {
-        return id >> dataCenterIdShift & ~(-1L << dataCenterIdBits);
+    public long getNodeId(long id) {
+        return id >> nodeIdShift & ~(-1L << nodeIdBits);
     }
 
     /**
@@ -122,13 +103,14 @@ public class Snowflake implements Serializable {
      *
      * @return ID
      */
+    @Override
     public synchronized long nextId() {
         long timestamp = genTime();
         if (timestamp < this.lastTimestamp) {
-            if(this.lastTimestamp - timestamp < 2000){
+            if (this.lastTimestamp - timestamp < 2000) {
                 // 容忍2秒内的回拨，避免NTP校时造成的异常
                 timestamp = lastTimestamp;
-            } else{
+            } else {
                 // 如果服务器时间有问题(时钟后退) 报错。
                 throw new IllegalStateException(String.format("Clock moved backwards. Refusing to generate id for %dms", lastTimestamp - timestamp));
             }
@@ -146,7 +128,7 @@ public class Snowflake implements Serializable {
 
         lastTimestamp = timestamp;
 
-        return ((timestamp - twepoch) << timestampLeftShift) | (dataCenterId << dataCenterIdShift) | (workerId << workerIdShift) | sequence;
+        return ((timestamp - twepoch) << timestampLeftShift) | (nodeId << nodeIdShift) | sequence;
     }
 
 
@@ -179,6 +161,6 @@ public class Snowflake implements Serializable {
      * @return 时间戳
      */
     private long genTime() {
-        return  System.currentTimeMillis();
+        return System.currentTimeMillis();
     }
 }

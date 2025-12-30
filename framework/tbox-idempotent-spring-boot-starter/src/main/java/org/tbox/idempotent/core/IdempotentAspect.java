@@ -34,8 +34,8 @@ public final class IdempotentAspect {
             instance.exceptionProcessing();
             throw ex;
         } finally {
-            instance.postProcessing();
             IdempotentContext.clean();
+            instance.postProcessing();
         }
         return resultObj;
     }

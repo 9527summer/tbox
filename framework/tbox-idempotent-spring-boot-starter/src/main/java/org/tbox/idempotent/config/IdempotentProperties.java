@@ -28,7 +28,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = IdempotentProperties.PREFIX)
 public class IdempotentProperties {
 
-    public static final String PREFIX = "idempotent";
+    public static final String PREFIX = "tbox.idempotent";
 
     /**
      * Token 申请后过期时间

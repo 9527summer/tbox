@@ -9,7 +9,7 @@ import java.util.function.Function;
 
 public class CacheUtils {
 
-    private static RedissonClient redissonClient;
+    private static volatile RedissonClient redissonClient;
 
     private static RedissonClient getRedissonClient() {
         if (redissonClient == null) {

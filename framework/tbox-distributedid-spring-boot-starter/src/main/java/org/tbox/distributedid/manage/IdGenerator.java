@@ -1,11 +1,11 @@
 package org.tbox.distributedid.manage;
 
 
-import org.tbox.distributedid.core.Snowflake;
+import org.tbox.distributedid.core.AbstractSnowflake;
 
 public interface IdGenerator {
 
-    Snowflake getSnowflake();
+    AbstractSnowflake getSnowflake();
 
 
 }

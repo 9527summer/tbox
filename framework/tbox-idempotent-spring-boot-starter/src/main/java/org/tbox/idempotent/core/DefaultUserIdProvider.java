@@ -13,7 +13,7 @@ public class DefaultUserIdProvider implements UserIdProvider {
     @Override
     public String getCurrentUserId() {
         String authorization = WebUtils.getHeader("Authorization");
-        if (!StringUtils.isEmpty(authorization) && authorization.startsWith("Bearer ")) {
+        if (StringUtils.hasText(authorization) && authorization.startsWith("Bearer ")) {
             authorization = authorization.replace("Bearer ", "");
         }
         return authorization;

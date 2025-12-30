@@ -99,8 +99,9 @@
                     <artifactSet>
                         <includes>
                             <include>io.github.9527summer:tbox-base-spring-boot-starter</include>
-                            <include>io.github.9527summer:idempotent-spring-boot-starter</include>
+                            <include>io.github.9527summer:tbox-idempotent-spring-boot-starter</include>
                             <include>io.github.9527summer:tbox-dapper-spring-boot-starter</include>
+                            <include>io.github.9527summer:tbox-distributedid-spring-boot-starter</include>
                         </includes>
                     </artifactSet>
                     <filters>

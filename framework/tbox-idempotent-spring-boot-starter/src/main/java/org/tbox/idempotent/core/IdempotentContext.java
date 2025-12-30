@@ -18,8 +18,11 @@ public final class IdempotentContext {
     }
 
     public static Object getKey(String key) {
+        if (key == null) {
+            return null;
+        }
         Map<String, Object> context = get();
-        if (context!=null && context.size()>0) {
+        if (context != null && !context.isEmpty()) {
             return context.get(key);
         }
         return null;
@@ -34,8 +37,11 @@ public final class IdempotentContext {
     }
 
     public static void put(String key, Object val) {
+        if (key == null) {
+            return;
+        }
         Map<String, Object> context = get();
-        if (context==null || context.size()==0) {
+        if (context == null) {
             context = new HashMap<>();
         }
         context.put(key, val);
@@ -43,8 +49,11 @@ public final class IdempotentContext {
     }
 
     public static void putContext(Map<String, Object> context) {
+        if (context == null) {
+            return;
+        }
         Map<String, Object> threadContext = CONTEXT.get();
-        if (threadContext!=null && threadContext.size()>0) {
+        if (threadContext != null && !threadContext.isEmpty()) {
             threadContext.putAll(context);
             return;
         }

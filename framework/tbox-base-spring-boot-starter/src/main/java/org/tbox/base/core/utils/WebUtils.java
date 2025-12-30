@@ -98,7 +98,7 @@ public class WebUtils {
      * 获取客户端IP地址
      * @return 客户端IP地址，不在Web上下文中返回null
      */
-    public String getClientIp() {
+    public static String getClientIp() {
         try {
             ServletRequestAttributes requestAttributes =
                     (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();

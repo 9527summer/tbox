@@ -1,35 +1,25 @@
--- 此脚本用于分配workId和dataCenterId
--- 在集群模式下，KEYS[1]参数传入snowflake_work_id_key
-local hashKey = KEYS[1]
-local dataCenterIdKey = 'dataCenterId'
-local workIdKey = 'workId'
+-- Lua script to allocate a nodeId using ZSET
+-- KEYS[1]: ZSET Key (e.g., tbox:ids:registry:{appName})
+-- ARGV[1]: Now (ms)
+-- ARGV[2]: Expire Duration (ms)
+-- ARGV[3]: Max Node ID (e.g., 1023)
 
-if (redis.call('exists', hashKey) == 0) then
-    redis.call('hincrby', hashKey, dataCenterIdKey, 0)
-    redis.call('hincrby', hashKey, workIdKey, 0)
-    return { 0, 0 }
+local key = KEYS[1]
+local now = tonumber(ARGV[1])
+local expireDuration = tonumber(ARGV[2])
+local maxId = tonumber(ARGV[3])
+local newScore = now + expireDuration
+
+-- Iterate from 0 to maxId to find an available slot
+-- Strategy: Check score. If score is nil (not exists) or score < now (expired), take it.
+for id = 0, maxId do
+    local score = redis.call('ZSCORE', key, id)
+    if not score or tonumber(score) < now then
+        -- Found available ID (either empty or expired)
+        redis.call('ZADD', key, newScore, id)
+        return id
+    end
 end
 
-local dataCenterId = tonumber(redis.call('hget', hashKey, dataCenterIdKey))
-local workId = tonumber(redis.call('hget', hashKey, workIdKey))
-
-local max = 31
-local resultWorkId = 0
-local resultDataCenterId = 0
-
-if (dataCenterId == max and workId == max) then
-    redis.call('hset', hashKey, dataCenterIdKey, '0')
-    redis.call('hset', hashKey, workIdKey, '0')
-
-elseif (workId ~= max) then
-    resultWorkId = redis.call('hincrby', hashKey, workIdKey, 1)
-    resultDataCenterId = dataCenterId
-
-elseif (dataCenterId ~= max) then
-    resultWorkId = 0
-    resultDataCenterId = redis.call('hincrby', hashKey, dataCenterIdKey, 1)
-    redis.call('hset', hashKey, workIdKey, '0')
-
-end
-
-return { resultWorkId, resultDataCenterId }
+-- No ID available
+return -1

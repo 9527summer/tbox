@@ -18,8 +18,8 @@ import java.util.concurrent.TimeUnit;
  */
 public final class RedisUtils {
 
-    private static RedisTemplate<String, Object> redisTemplate;
-    private static StringRedisTemplate stringRedisTemplate;
+    private static volatile RedisTemplate<String, Object> redisTemplate;
+    private static volatile StringRedisTemplate stringRedisTemplate;
 
     private RedisUtils() {
         throw new UnsupportedOperationException("Utility class cannot be instantiated");

@@ -5,18 +5,15 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class IdGeneratorManage {
 
+    public static final String DEFAULT_KEY = "default";
+    public static final String TIME_KEY = "time";
+
     private static Map<String,IdGenerator> idGeneratorMap = new ConcurrentHashMap<>();
 
     static {
-        idGeneratorMap.put("default", new DefaultIdGenerator());
+        idGeneratorMap.put(DEFAULT_KEY, new DefaultIdGenerator());
+        idGeneratorMap.put(TIME_KEY, new TimeIdGenerator());
     }
-
-//    public static void registerIdGenerator(String resource, IdGenerator idGenerator) {
-//        IdGenerator generator = idGeneratorMap.get(resource);
-//        if (generator!=null) {
-//            idGeneratorMap.put(resource, idGenerator);
-//        }
-//    }
 
     /**
      * 获取 ID 生成器
@@ -32,6 +29,14 @@ public class IdGeneratorManage {
      * @return
      */
     public static IdGenerator getDefaultServiceIdGenerator() {
-        return getIdGenerator("default");
+        return getIdGenerator(DEFAULT_KEY);
+    }
+    
+    /**
+     * 获取可读性 ID 生成器
+     * @return
+     */
+    public static IdGenerator getTimeIdGenerator() {
+        return getIdGenerator(TIME_KEY);
     }
 }
