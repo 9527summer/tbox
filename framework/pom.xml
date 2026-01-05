@@ -4,7 +4,7 @@
     <parent>
         <groupId>io.github.9527summer</groupId>
         <artifactId>tbox-all</artifactId>
-        <version>${reversion}</version>
+        <version>${revision}</version>
     </parent>
 
     <artifactId>tbox-framework</artifactId>
@@ -32,6 +32,9 @@
     </scm>
 
     <modules>
+        <module>tbox-dependencies</module>
+        <module>tbox-spring-support-spring-boot-starter</module>
+        <module>tbox-redis-spring-boot-starter</module>
         <module>tbox-idempotent-spring-boot-starter</module>
         <module>tbox-base-spring-boot-starter</module>
         <module>tbox-all-spring-boot-starter</module>
@@ -40,58 +43,26 @@
     </modules>
 
     <properties>
-        <java.version>1.8</java.version>
+        <java.version>17</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <redisson.version>3.21.3</redisson.version>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <spring-boot.version>2.6.13</spring-boot.version>
 
 
         <!-- 添加插件版本管理 -->
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
         <maven-jar-plugin.version>3.2.0</maven-jar-plugin.version>
         <maven-shade-plugin.version>3.2.4</maven-shade-plugin.version>
+        <maven-surefire-plugin.version>3.2.5</maven-surefire-plugin.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <groupId>org.redisson</groupId>
-                <artifactId>redisson-spring-boot-starter</artifactId>
-                <version>${redisson.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-dependencies</artifactId>
-                <version>${spring-boot.version}</version>
+                <groupId>io.github.9527summer</groupId>
+                <artifactId>tbox-dependencies</artifactId>
+                <version>${project.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
-            </dependency>
-
-            <!-- 添加子模块依赖管理 -->
-            <dependency>
-                <groupId>io.github.9527summer</groupId>
-                <artifactId>tbox-base-spring-boot-starter</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>io.github.9527summer</groupId>
-                <artifactId>tbox-idempotent-spring-boot-starter</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>io.github.9527summer</groupId>
-                <artifactId>tbox-dapper-spring-boot-starter</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>io.github.9527summer</groupId>
-                <artifactId>tbox-distributedid-spring-boot-starter</artifactId>
-                <version>${project.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -114,6 +85,7 @@
                         <source>${java.version}</source>
                         <target>${java.version}</target>
                         <encoding>${project.build.sourceEncoding}</encoding>
+                        <parameters>true</parameters>
                     </configuration>
                 </plugin>
                 <plugin>
@@ -161,9 +133,11 @@
                         <artifactSet>
                             <includes>
                                 <include>io.github.9527summer:tbox-base-spring-boot-starter</include>
+                                <include>io.github.9527summer:tbox-spring-support-spring-boot-starter</include>
                                 <include>io.github.9527summer:tbox-idempotent-spring-boot-starter</include>
                                 <include>io.github.9527summer:tbox-dapper-spring-boot-starter</include>
                                 <include>io.github.9527summer:tbox-distributedid-spring-boot-starter</include>
+                                <include>io.github.9527summer:tbox-redis-spring-boot-starter</include>
                             </includes>
                         </artifactSet>
                         <filters>
@@ -180,6 +154,9 @@
                             <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
                                 <resource>META-INF/spring.factories</resource>
                             </transformer>
+                            <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                                <resource>META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports</resource>
+                            </transformer>
                         </transformers>
                     </configuration>
                     <executions>
@@ -191,6 +168,7 @@
                         </execution>
                     </executions>
                 </plugin>
+
             </plugins>
         </pluginManagement>
         <plugins>

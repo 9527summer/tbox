@@ -12,7 +12,7 @@
 
 ```xml
 <dependency>
-  <groupId>org.tbox</groupId>
+  <groupId>io.github.9527summer</groupId>
   <artifactId>tbox-distributedid-spring-boot-starter</artifactId>
   <version>${tbox.version}</version>
 </dependency>
@@ -61,7 +61,9 @@ List<String> codes = org.tbox.distributedid.utils.RedeemCodeUtils.nextRedeemCode
 - **节点数**：`nodeId` 范围 `0~99`（共 100 个节点）
 - **单节点吞吐上限（理论）**：每毫秒最多 `100`（约 `100,000`/秒/节点）
 - **集群吞吐上限（理论）**：100 节点合计约 `10,000`/毫秒（约 `10,000,000`/秒）
-- **数值长度**：当年份为 `2010~2099` 时，数值长度可保持为 19 位；如果年份为 `2000~2009`，最左侧 `yy` 会导致数值长度变短（数值型 long 无法保留前导 0）
+- **数值长度**：当年份为 `2010~2099` 时，字符串形态通常为 19 位；但注意该算法是“十进制拼接成 long”，会受 `Long.MAX_VALUE` 约束
+- **不溢出 long 的可用年限**：通常可用到 **2092-12-31 23:59:59.999**（受时区影响）；从 2093 年开始可能发生 long 溢出（实现会抛异常保护）
+- **前导 0 说明**：如果年份为 `2000~2009`，最左侧 `yy` 会导致数值长度变短（数值型 long 无法保留前导 0）
 - **时钟回拨策略**：与 `Snowflake` 保持一致（回拨 `<2000ms` 容忍，否则抛异常）
 - **并发策略**：`nextId()` 使用 `synchronized`，吞吐一般低于纯 Snowflake（更适合“破千 QPS 就很好”的业务）
 
@@ -105,4 +107,3 @@ List<String> codes = org.tbox.distributedid.utils.RedeemCodeUtils.nextRedeemCode
 
 - 基于 Snowflake `long` 进行 Base62 编码（字符集 `0-9a-zA-Z`）
 - 字符串长度通常不超过 **11**（因为 `2^64` 的 Base62 表示最多 11 位）
-

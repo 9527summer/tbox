@@ -15,11 +15,10 @@ import org.springframework.web.multipart.MultipartFile;
 import org.tbox.base.core.exception.SysException;
 import org.tbox.base.core.utils.JsonUtils;
 import org.tbox.dapper.config.TracerProperties;
-import org.tbox.dapper.context.TraceContext;
 import org.tbox.dapper.utils.PathMatcher;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
@@ -77,33 +76,22 @@ public class WebTraceAspect {
         // 记录请求参数
         logRequest(methodName, clientIp, requestMethod, uri, filteredArgs);
         
+        long startTimeMs = System.currentTimeMillis();
         try {
             // 执行目标方法
             Object result = joinPoint.proceed();
-            
-            // 从TraceContext获取耗时信息
-            long executionTime = getExecutionTime();
+            long executionTime = System.currentTimeMillis() - startTimeMs;
             
             // 记录响应结果和执行时间
             logResponse(methodName, result, executionTime);
             return result;
         } catch (Exception e) {
-            // 从TraceContext获取耗时信息
-            long executionTime = getExecutionTime();
+            long executionTime = System.currentTimeMillis() - startTimeMs;
             
             // 记录异常
             logError(methodName, e, executionTime);
             throw e;
         }
-    }
-    
-    /**
-     * 从TraceContext获取当前执行时间
-     * 如果无法获取TraceContext，则返回0
-     */
-    private long getExecutionTime() {
-        TraceContext context = TraceContext.getCurrentContext();
-        return context != null ? context.getDuration() : 0;
     }
 
     /**

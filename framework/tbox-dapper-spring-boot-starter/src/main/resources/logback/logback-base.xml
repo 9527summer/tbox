@@ -6,7 +6,7 @@
     <springProperty scope="context" name="ASYNC_ENABLED" source="logging.async.enabled" defaultValue="false"/>
 
     <!-- 统一定义日志格式变量 -->
-    <property name="LOG_PATTERN" value=" %d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{traceId}] [%X{spanId}] %-5level %logger{50} - %msg%n"/>
+    <property name="LOG_PATTERN" value=" %d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{traceId:-}] [%X{spanId:-}] %-5level %logger{50} - %msg%n"/>
 
     <!-- 统一定义字符集 -->
     <property name="CHARSET" value="UTF-8"/>

@@ -169,4 +169,4 @@ public class TracerProperties {
             this.quartzEnabled = quartzEnabled;
         }
     }
-} 
+}

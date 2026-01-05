@@ -2,41 +2,46 @@ package org.tbox.dapper.config;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.Ordered;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import org.tbox.dapper.client.TracerClientAutoConfiguration;
-import org.tbox.dapper.web.TracerWebInterceptor;
+import org.tbox.dapper.concurrent.TracingThreadPoolAutoConfiguration;
+import org.tbox.dapper.mq.TracingMqAutoConfiguration;
+import org.tbox.dapper.scheduler.TracingSchedulerAutoConfiguration;
+import org.tbox.dapper.web.TraceResponseHeaderInterceptor;
 import org.tbox.dapper.web.aspect.WebTraceAspect;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 
 /**
  * TBox-Tracer自动配置
  */
-@Configuration
+@AutoConfiguration
 @EnableConfigurationProperties(TracerProperties.class)
 @ConditionalOnProperty(prefix = "tbox.tracer", name = "enabled", havingValue = "true", matchIfMissing = true)
-@Import(TracerClientAutoConfiguration.class)
+@Import({
+        TracingThreadPoolAutoConfiguration.class,
+        TracingSchedulerAutoConfiguration.class,
+        TracingMqAutoConfiguration.class
+})
 public class TracerAutoConfiguration {
     private static final Logger log = LoggerFactory.getLogger(TracerAutoConfiguration.class);
 
-    @Autowired
-    private TracerProperties properties;
+    private final TracerProperties properties;
 
     @Value("${spring.application.name:unknown}")
     private String applicationName;
 
-    public TracerAutoConfiguration() {
+    public TracerAutoConfiguration(TracerProperties properties) {
+        this.properties = properties;
         log.debug("Initializing TBox-Tracer");
     }
 
@@ -62,23 +67,20 @@ public class TracerAutoConfiguration {
     }
 
     /**
-     * 注册Web配置，添加拦截器
+     * 将 traceId/spanId 写入响应头（traceId/spanId），便于排查。
+     * <p>不负责传播（传播由 Spring Boot Tracing / W3C TraceContext 负责）。</p>
      */
     @Bean
-    public WebMvcConfigurer tracerWebMvcConfigurer() {
+    @ConditionalOnClass(name = "io.micrometer.tracing.Tracer")
+    @ConditionalOnBean(type = "io.micrometer.tracing.Tracer")
+    public WebMvcConfigurer traceResponseHeaderWebMvcConfigurer(io.micrometer.tracing.Tracer tracer) {
         return new WebMvcConfigurer() {
             @Override
             public void addInterceptors(InterceptorRegistry registry) {
-                log.debug("Registering tracer web interceptor");
-
-                TracerWebInterceptor interceptor = new TracerWebInterceptor(properties);
-                registry.addInterceptor(interceptor)
+                registry.addInterceptor(new TraceResponseHeaderInterceptor(tracer))
                         .addPathPatterns("/**")
                         .order(Ordered.HIGHEST_PRECEDENCE + 10);
             }
         };
     }
-
-
-
 } 

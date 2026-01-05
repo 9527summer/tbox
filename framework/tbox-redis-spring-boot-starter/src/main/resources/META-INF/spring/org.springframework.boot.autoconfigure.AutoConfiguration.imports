@@ -1,0 +1,2 @@
+org.tbox.redis.config.TboxRedisAutoConfiguration
+org.tbox.redis.ratelimit.config.RedisRateLimitAutoConfiguration

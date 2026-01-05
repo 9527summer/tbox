@@ -13,7 +13,7 @@
 
 ## 环境要求
 
-- Java 8+
+- Java 17+
 - MySQL 5.7+
 - Redis 5.0+
 - Maven 3.5+
@@ -113,4 +113,68 @@ TBox框架提供了统一的异常处理机制：
 
 - **BizException**：业务异常，返回标准业务错误响应
 - **SysException**：系统异常，返回标准系统错误响应
-- **RepeatConsumptionException**：重复消费异常，由幂等机制触发 
+- **RepeatConsumptionException**：重复消费异常，由幂等机制触发
+
+## Lua 脚本测试（分配 nodeId）
+
+本项目集成了 `tbox-distributedid-spring-boot-starter` 的 Lua 脚本 `lua/chooseWorkIdLua.lua`，用于在 Redis ZSET 中分配可用的 `nodeId`（member 为 nodeId，score 为过期时间）。
+
+### 方式一：HTTP 接口（推荐）
+
+启动后调用：
+
+- `GET /debug/lua/chooseWorkId`：执行一次 Lua，返回 nodeId/registryKey/expireAt 等
+- `GET /debug/lua/chooseWorkId/batch?count=10`：连续执行多次
+- `GET /debug/lua/registry?limit=50`：查看当前 ZSET 占用情况（member + score）
+- `DELETE /debug/lua/registry?nodeId=123`：手动释放（ZREM），便于重复测试
+
+### 方式二：模拟“频繁重启/更换 IP”
+
+通过 `CommandLineRunner` 在启动时自动循环执行 Lua，模拟重启时不断申请 nodeId：
+
+在 `application-dev.properties`（或启动参数）增加：
+
+```properties
+# 开启模拟器
+tbox.lua.sim.enabled=true
+# 循环次数
+tbox.lua.sim.iterations=50
+# 过期时间（ms），建议设置小一点便于观察过期/回收
+tbox.lua.sim.expireMs=3000
+# 节点池大小（maxId），建议设置小一点便于快速“占满”
+tbox.lua.sim.maxId=16
+
+# keyMode=app：所有“重启”都使用同一个 registryKey（更贴近真实）
+# keyMode=ip ：每次循环使用不同 key（用 key 后缀模拟 IP 变化）
+tbox.lua.sim.keyMode=app
+
+ # release=true：每次循环模拟“优雅停机”释放上一次分配的 nodeId（ZREM）
+ # release=false：模拟“崩溃/强杀”，不释放，等待 expireMs 过期回收
+ tbox.lua.sim.release=false
+
+ # reclaim=true：增加“崩溃不释放 -> 等待过期 -> 再次分配复用”的回收验证（两阶段）
+ tbox.lua.sim.reclaim=true
+ # reclaimWaitMs=0：默认等待 expireMs+200ms；你也可以显式设置更长的等待时间
+ tbox.lua.sim.reclaimWaitMs=0
+```
+
+然后启动应用，观察控制台日志中每次分配到的 nodeId 以及 expireAt。
+
+#### 推荐参数（快速复现“崩溃不释放，靠过期回收”）
+
+将 `maxId` 设置小一点，方便快速“占满”，例如：
+
+```properties
+tbox.lua.sim.enabled=true
+tbox.lua.sim.expireMs=1000
+tbox.lua.sim.maxId=3
+tbox.lua.sim.iterations=6
+tbox.lua.sim.keyMode=app
+tbox.lua.sim.release=false
+tbox.lua.sim.reclaim=true
+```
+
+预期现象：
+
+- Phase 1（fill）：会很快出现 `nodeId=-1`（表示池已占满）
+- 等待 `expireMs` 后 Phase 2（reclaim）：会再次分配到 `0..maxId`（表示过期 slot 被复用）

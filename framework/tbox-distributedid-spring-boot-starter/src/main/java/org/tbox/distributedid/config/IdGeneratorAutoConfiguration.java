@@ -1,28 +1,31 @@
 package org.tbox.distributedid.config;
 
+import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.tbox.distributedid.core.RandomIdGenerator;
 import org.tbox.distributedid.core.RedisIdGenerator;
 import org.tbox.distributedid.core.TimeRandomIdGenerator;
 import org.tbox.distributedid.core.TimeRedisIdGenerator;
 
-@Configuration
+@AutoConfiguration
 public class IdGeneratorAutoConfiguration {
 
     @Configuration
+    @ConditionalOnMissingBean(type = "org.springframework.data.redis.core.StringRedisTemplate")
     public static class RandomIdGeneratorConfiguration {
         @Bean
-        @ConditionalOnMissingBean(RedisIdGenerator.class)
+        @ConditionalOnMissingBean
         public RandomIdGenerator defaultIdGenerator() {
             return new RandomIdGenerator();
         }
 
         @Bean
-        @ConditionalOnMissingBean(TimeRedisIdGenerator.class)
+        @ConditionalOnMissingBean
         public TimeRandomIdGenerator timeRandomIdGenerator() {
             return new TimeRandomIdGenerator();
         }
@@ -30,18 +33,19 @@ public class IdGeneratorAutoConfiguration {
 
 
     @Configuration
-    @ConditionalOnClass(name = "org.springframework.data.redis.core.RedisTemplate")
+    @ConditionalOnClass(StringRedisTemplate.class)
+    @ConditionalOnBean(StringRedisTemplate.class)
     public static class RedisIdGeneratorConfiguration {
         @Bean
         @ConditionalOnMissingBean
-        public RedisIdGenerator redisIdGenerator(RedisTemplate<String, Object> redisTemplate) {
-            return new RedisIdGenerator(redisTemplate);
+        public RedisIdGenerator redisIdGenerator(StringRedisTemplate stringRedisTemplate) {
+            return new RedisIdGenerator(stringRedisTemplate);
         }
 
         @Bean
         @ConditionalOnMissingBean
-        public TimeRedisIdGenerator timeRedisIdGenerator(RedisTemplate<String, Object> redisTemplate) {
-            return new TimeRedisIdGenerator(redisTemplate);
+        public TimeRedisIdGenerator timeRedisIdGenerator(StringRedisTemplate stringRedisTemplate) {
+            return new TimeRedisIdGenerator(stringRedisTemplate);
         }
         
 //        @Bean

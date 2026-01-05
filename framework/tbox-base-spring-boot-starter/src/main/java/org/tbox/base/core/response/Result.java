@@ -1,9 +1,6 @@
 package org.tbox.base.core.response;
 
 
-import io.swagger.v3.oas.annotations.media.Schema;
-import org.slf4j.MDC;
-
 import java.io.Serializable;
 
 
@@ -25,19 +22,16 @@ public class Result<T> implements Serializable {
     /**
      * 返回码
      */
-    @Schema(description = "返回码")
     private String code;
 
     /**
      * 返回消息
      */
-    @Schema(description = "返回消息")
     private String text;
 
     /**
      * 响应数据
      */
-    @Schema(description = "响应数据")
     private T data;
 
     public String getCode() {

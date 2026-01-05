@@ -1,92 +1,50 @@
 package org.tbox.dapper.mq;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
+import io.micrometer.tracing.Tracer;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.kafka.DefaultKafkaProducerFactoryCustomizer;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.tbox.dapper.mq.kafka.TracingKafkaConsumerInterceptor;
-import org.tbox.dapper.mq.kafka.TracingKafkaProducerInterceptor;
-import org.tbox.dapper.mq.rocketmq.TracingRocketMQConsumerHook;
-import org.tbox.dapper.mq.rocketmq.TracingRocketMQConsumerInterceptor;
-import org.tbox.dapper.mq.rocketmq.TracingRocketMQProducerHook;
-import org.tbox.dapper.mq.rocketmq.TracingRocketMQProducerInterceptor;
+import org.springframework.kafka.config.ContainerCustomizer;
+import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
+import org.tbox.dapper.mq.kafka.KafkaTracingRecordInterceptor;
+import org.tbox.dapper.mq.kafka.TracingProducer;
+import org.tbox.dapper.mq.rocketmq.RocketMqTracingBeanPostProcessor;
 
 /**
- * 消息队列追踪自动配置类
- * 只要检测到相关类存在，就自动注册追踪拦截器，无需用户配置
+ * MQ Trace 串联自动配置（仅日志关联，W3C traceparent）。
+ *
+ * <p>结构参考调度模块：在 MQ 包下按不同 MQ 组件聚合配置，由总配置统一 import。</p>
  */
-@Configuration
+@AutoConfiguration
+@ConditionalOnBean(Tracer.class)
 @ConditionalOnProperty(prefix = "tbox.tracer", name = "enabled", havingValue = "true", matchIfMissing = true)
-public class TracingMQAutoConfiguration {
+public class TracingMqAutoConfiguration {
 
-    private static final Logger log = LoggerFactory.getLogger(TracingMQAutoConfiguration.class);
-    
-    /**
-     * RocketMQ追踪配置
-     * 检测到RocketMQ类存在时自动启用
-     */
-    @Configuration
+    @ConditionalOnClass(name = "org.springframework.kafka.core.ProducerFactory")
+    public static class KafkaAutoConfiguration {
+
+        @Bean
+        public DefaultKafkaProducerFactoryCustomizer kafkaTracingProducerFactoryCustomizer(Tracer tracer) {
+            return factory -> factory.addPostProcessor(producer -> new TracingProducer<>(producer, tracer));
+        }
+
+        @Bean
+        public ContainerCustomizer<Object, Object, ConcurrentMessageListenerContainer<Object, Object>> kafkaTracingContainerCustomizer(
+                Tracer tracer) {
+            return container -> container.setRecordInterceptor(new KafkaTracingRecordInterceptor<>(tracer));
+        }
+    }
+
     @ConditionalOnClass(name = "org.apache.rocketmq.client.producer.DefaultMQProducer")
-    public static class RocketMQTracingConfiguration {
-        
-        @Value("${spring.application.name:unknown-service}")
-        private String applicationName;
-        
+    public static class RocketMqAutoConfiguration {
+
         @Bean
-        @ConditionalOnMissingBean
-        public TracingRocketMQProducerInterceptor tracingRocketMQProducerInterceptor() {
-            log.debug("自动注册RocketMQ生产者追踪拦截器");
-            return new TracingRocketMQProducerInterceptor(applicationName);
-        }
-        
-        @Bean
-        @ConditionalOnMissingBean
-        public TracingRocketMQConsumerInterceptor tracingRocketMQConsumerInterceptor() {
-            log.debug("自动注册RocketMQ消费者追踪拦截器");
-            return new TracingRocketMQConsumerInterceptor(applicationName);
-        }
-        
-        @Bean
-        @ConditionalOnMissingBean
-        public TracingRocketMQProducerHook tracingRocketMQProducerHook() {
-            log.debug("自动注册RocketMQ生产者追踪钩子");
-            return new TracingRocketMQProducerHook(applicationName);
-        }
-        
-        @Bean
-        @ConditionalOnMissingBean
-        public TracingRocketMQConsumerHook tracingRocketMQConsumerHook() {
-            log.debug("自动注册RocketMQ消费者追踪钩子");
-            return new TracingRocketMQConsumerHook(applicationName);
+        public RocketMqTracingBeanPostProcessor rocketMqTracingBeanPostProcessor(Tracer tracer) {
+            return new RocketMqTracingBeanPostProcessor(tracer);
         }
     }
-    
-    /**
-     * Kafka追踪配置
-     * 检测到Kafka类存在时自动启用
-     */
-    @Configuration
-    @ConditionalOnClass(name = "org.apache.kafka.clients.producer.KafkaProducer")
-    public static class KafkaTracingConfiguration {
-        
-        @Value("${spring.application.name:unknown-service}")
-        private String applicationName;
-        
-        @Bean
-        public TracingKafkaProducerInterceptor tracingKafkaProducerInterceptor() {
-            log.debug("自动注册Kafka生产者追踪拦截器");
-            return new TracingKafkaProducerInterceptor(applicationName);
-        }
-        
-        @Bean
-        @SuppressWarnings({"unchecked", "rawtypes"})
-        public TracingKafkaConsumerInterceptor tracingKafkaConsumerInterceptor() {
-            log.debug("自动注册Kafka消费者追踪拦截器: applicationName={}", applicationName);
-            return new TracingKafkaConsumerInterceptor(applicationName);
-        }
-    }
-} 
+}
+

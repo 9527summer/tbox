@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Timeout;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.ZoneId;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -77,6 +78,32 @@ class ReadableSnowflakeTest {
         long end = System.currentTimeMillis();
         
         assertTrue((end - start) >= 1, "Should take at least some time to generate more than max sequence");
+    }
+
+    @Test
+    void testLongOverflowGuard_WillThrowAfter2092() {
+        ZoneId zoneId = ZoneId.systemDefault();
+
+        long ts2093 = LocalDateTime.of(2093, 1, 1, 0, 0, 0, 0)
+                .atZone(zoneId)
+                .toInstant()
+                .toEpochMilli();
+
+        TimeSnowflake generator = new TimeSnowflake(1, () -> ts2093);
+        assertThrows(IllegalStateException.class, generator::nextId);
+    }
+
+    @Test
+    void testLongOverflowGuard_Allows2092End() {
+        ZoneId zoneId = ZoneId.systemDefault();
+
+        long ts2092 = LocalDateTime.of(2092, 12, 31, 23, 59, 59, 999_000_000)
+                .atZone(zoneId)
+                .toInstant()
+                .toEpochMilli();
+
+        TimeSnowflake generator = new TimeSnowflake(1, () -> ts2092);
+        assertDoesNotThrow(generator::nextId);
     }
 
     @Test

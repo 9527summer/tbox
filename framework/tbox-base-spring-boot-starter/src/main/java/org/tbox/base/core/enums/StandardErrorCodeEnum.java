@@ -16,7 +16,8 @@ public enum StandardErrorCodeEnum {
     VALIDATION_ERROR("SYS-00009", "数据验证错误"),
     SERVICE_UNAVAILABLE("SYS-00010", "服务不可用"),
     BIZ_ERROR("SYS-00011", "业务错误"),
-    REPEAT_CONSUMER_ERROR("SYS-00012", "重复消费");
+    REPEAT_CONSUMER_ERROR("SYS-00012", "重复消费"),
+    RATE_LIMIT_ERROR("SYS-00013", "请求过于频繁");
 
     private final String code;
 

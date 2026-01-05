@@ -2,6 +2,8 @@ package org.tbox.dapper.scheduler.xxljob;
 
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
+import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationRegistry;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -9,7 +11,6 @@ import org.aspectj.lang.reflect.MethodSignature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tbox.dapper.config.TracerProperties;
-import org.tbox.dapper.context.TraceContext;
 import org.tbox.dapper.core.TracerConstants;
 
 import java.lang.reflect.Method;
@@ -23,9 +24,11 @@ public class XxlJobTraceAspect {
     private static final Logger log = LoggerFactory.getLogger(XxlJobTraceAspect.class);
 
     private TracerProperties tracerProperties;
+    private final ObservationRegistry observationRegistry;
 
-    public XxlJobTraceAspect(TracerProperties tracerProperties) {
+    public XxlJobTraceAspect(TracerProperties tracerProperties, ObservationRegistry observationRegistry) {
         this.tracerProperties = tracerProperties;
+        this.observationRegistry = observationRegistry;
     }
 
     /**
@@ -45,13 +48,13 @@ public class XxlJobTraceAspect {
         XxlJob xxlJob = method.getAnnotation(XxlJob.class);
         String jobName = xxlJob.value();
         
-        // 创建追踪上下文
-        TraceContext traceContext = TraceContext.createRootContext(tracerProperties.getApplicationName());
-        traceContext.setAttribute(TracerConstants.COMPONENT_TYPE, "scheduled-task");
-        traceContext.setAttribute(TracerConstants.RESOURCE_TYPE, "xxl-job");
-        traceContext.setAttribute(TracerConstants.RESOURCE_NAME, jobName);
-        traceContext.setAttribute("xxl.job.class", className);
-        traceContext.setAttribute("xxl.job.method", methodName);
+        Observation observation = Observation.start("tbox.xxljob", observationRegistry)
+                .lowCardinalityKeyValue(TracerConstants.COMPONENT_TYPE, "scheduled-task")
+                .lowCardinalityKeyValue(TracerConstants.RESOURCE_TYPE, "xxl-job")
+                .lowCardinalityKeyValue(TracerConstants.RESOURCE_NAME, jobName)
+                .lowCardinalityKeyValue("xxl.job.class", className)
+                .lowCardinalityKeyValue("xxl.job.method", methodName)
+                .lowCardinalityKeyValue("app.name", tracerProperties.getApplicationName() == null ? "unknown" : tracerProperties.getApplicationName());
 
         
         // 尝试获取XXL-Job上下文信息
@@ -61,13 +64,13 @@ public class XxlJobTraceAspect {
             int shardIndex = XxlJobHelper.getShardIndex();
             int shardTotal = XxlJobHelper.getShardTotal();
             
-            traceContext.setAttribute("xxl.job.id", String.valueOf(jobId));
+            observation.lowCardinalityKeyValue("xxl.job.id", String.valueOf(jobId));
             if (jobParam != null && !jobParam.isEmpty()) {
-                traceContext.setAttribute("xxl.job.param", jobParam);
+                observation.lowCardinalityKeyValue("xxl.job.param", jobParam);
             }
             if (shardTotal > 1) {
-                traceContext.setAttribute("xxl.job.shard.index", String.valueOf(shardIndex));
-                traceContext.setAttribute("xxl.job.shard.total", String.valueOf(shardTotal));
+                observation.lowCardinalityKeyValue("xxl.job.shard.index", String.valueOf(shardIndex));
+                observation.lowCardinalityKeyValue("xxl.job.shard.total", String.valueOf(shardTotal));
             }
 
         } catch (Exception e) {
@@ -83,8 +86,7 @@ public class XxlJobTraceAspect {
             return result;
         } catch (Throwable e) {
             // 记录异常信息
-            traceContext.setAttribute(TracerConstants.ERROR, "true");
-            traceContext.setAttribute(TracerConstants.ERROR_MESSAGE, e.getMessage());
+            observation.error(e);
             log.error("XXL-Job task failed: {}, error: {}", jobName, e.getMessage(), e);
             
             // 向XXL-Job报告失败
@@ -98,8 +100,8 @@ public class XxlJobTraceAspect {
         } finally {
             // 记录执行时间
             long duration = System.currentTimeMillis() - startTime;
-            traceContext.setAttribute(TracerConstants.DURATION, String.valueOf(duration));
-            TraceContext.removeContext();
+            observation.lowCardinalityKeyValue(TracerConstants.DURATION, String.valueOf(duration));
+            observation.stop();
         }
     }
 } 

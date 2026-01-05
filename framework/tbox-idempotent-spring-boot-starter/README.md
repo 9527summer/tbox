@@ -17,7 +17,7 @@
 <dependency>
     <groupId>io.github.9527summer</groupId>
     <artifactId>tbox-idempotent-spring-boot-starter</artifactId>
-    <version>1.0.4</version>
+    <version>${tbox.version}</version>
 </dependency>
 ```
 

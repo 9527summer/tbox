@@ -1,12 +1,13 @@
 package org.tbox.dapper.scheduler.spring;
 
+import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationRegistry;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.tbox.dapper.config.TracerProperties;
-import org.tbox.dapper.context.TraceContext;
 import org.tbox.dapper.core.TracerConstants;
 
 import java.lang.reflect.Method;
@@ -19,9 +20,11 @@ import java.lang.reflect.Method;
 public class ScheduledTaskTraceAspect {
 
     private TracerProperties tracerProperties;
+    private final ObservationRegistry observationRegistry;
 
-    public ScheduledTaskTraceAspect(TracerProperties tracerProperties) {
+    public ScheduledTaskTraceAspect(TracerProperties tracerProperties, ObservationRegistry observationRegistry) {
         this.tracerProperties = tracerProperties;
+        this.observationRegistry = observationRegistry;
     }
 
     /**
@@ -41,11 +44,11 @@ public class ScheduledTaskTraceAspect {
         Scheduled scheduled = method.getAnnotation(Scheduled.class);
 //        String taskInfo = getScheduledTaskInfo(scheduled);
         
-        // 创建追踪上下文
-        TraceContext traceContext = TraceContext.createRootContext(tracerProperties.getApplicationName());
-        traceContext.setAttribute(TracerConstants.COMPONENT_TYPE, "scheduled-task");
-        traceContext.setAttribute(TracerConstants.RESOURCE_TYPE, "spring-scheduled");
-        traceContext.setAttribute(TracerConstants.RESOURCE_NAME, className + "." + methodName);
+        Observation observation = Observation.start("tbox.scheduled", observationRegistry)
+                .lowCardinalityKeyValue(TracerConstants.COMPONENT_TYPE, "scheduled-task")
+                .lowCardinalityKeyValue(TracerConstants.RESOURCE_TYPE, "spring-scheduled")
+                .lowCardinalityKeyValue(TracerConstants.RESOURCE_NAME, className + "." + methodName)
+                .lowCardinalityKeyValue("app.name", tracerProperties.getApplicationName() == null ? "unknown" : tracerProperties.getApplicationName());
 //        traceContext.setAttribute("scheduled.task.info", taskInfo);
         
         // 记录开始执行
@@ -57,14 +60,13 @@ public class ScheduledTaskTraceAspect {
             return result;
         } catch (Throwable e) {
             // 记录异常信息
-            traceContext.setAttribute(TracerConstants.ERROR, "true");
-            traceContext.setAttribute(TracerConstants.ERROR_MESSAGE, e.getMessage());
+            observation.error(e);
             throw e;
         } finally {
             // 记录执行时间
             long duration = System.currentTimeMillis() - startTime;
-            traceContext.setAttribute(TracerConstants.DURATION, String.valueOf(duration));
-            TraceContext.removeContext();
+            observation.lowCardinalityKeyValue(TracerConstants.DURATION, String.valueOf(duration));
+            observation.stop();
         }
     }
     

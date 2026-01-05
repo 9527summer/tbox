@@ -4,13 +4,17 @@ import java.io.Serializable;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.function.LongSupplier;
 
 /**
  * 基于时间戳的雪花算法
  * <p>
- * ID格式：yyMMddHHmmssSSS(15位) + NodeId(2位) + Sequence(2位) = 19位（从 2010-01-01 到 2099-12-31 可保证数值长度为 19 位）
+ * ID格式：yyMMddHHmmssSSS(15位) + NodeId(2位) + Sequence(2位) = 19位
  * 容量：100节点 × 100序列/毫秒 = 每毫秒1万个ID
- * 使用年限：2099年
+ * <p>
+ * 注意：该实现是“十进制拼接成 long”，会受 {@link Long#MAX_VALUE} 约束。
+ * 在默认参数（nodeId 两位、sequence 两位）下，时间前缀最多到 92xxxx...，
+ * 即在不发生 long 溢出的前提下，通常可用到 2092-12-31 23:59:59.999（受时区影响）。
  */
 public class TimeSnowflake extends AbstractSnowflake implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -20,8 +24,10 @@ public class TimeSnowflake extends AbstractSnowflake implements Serializable {
     private static final long TIMESTAMP_MULTIPLIER = 10000L;
     private static final long NODE_ID_MULTIPLIER = 100L;
     private static final ZoneId ZONE_ID = ZoneId.systemDefault();
+    private static final long MAX_TIME_PREFIX = (Long.MAX_VALUE - (MAX_NODE_ID * NODE_ID_MULTIPLIER + MAX_SEQUENCE)) / TIMESTAMP_MULTIPLIER;
 
     private final long nodeId;
+    private final LongSupplier timeMillisSupplier;
     private long sequence = 0L;
     private long lastTimestamp = -1L;
 
@@ -30,15 +36,23 @@ public class TimeSnowflake extends AbstractSnowflake implements Serializable {
     private long cachedTimePrefix = -1L;
 
     public TimeSnowflake(long nodeId) {
+        this(nodeId, System::currentTimeMillis);
+    }
+
+    TimeSnowflake(long nodeId, LongSupplier timeMillisSupplier) {
         if (nodeId > MAX_NODE_ID || nodeId < 0) {
             throw new IllegalArgumentException("NodeId must be between 0 and " + MAX_NODE_ID);
         }
+        if (timeMillisSupplier == null) {
+            throw new IllegalArgumentException("timeMillisSupplier must not be null");
+        }
         this.nodeId = nodeId;
+        this.timeMillisSupplier = timeMillisSupplier;
     }
 
     @Override
     public synchronized long nextId() {
-        long timestamp = System.currentTimeMillis();
+        long timestamp = currentTimeMillis();
 
         // 时钟回拨检查（与 Snowflake 保持一致）
         if (timestamp < lastTimestamp) {
@@ -53,7 +67,7 @@ public class TimeSnowflake extends AbstractSnowflake implements Serializable {
         if (timestamp == lastTimestamp) {
             sequence++;
             if (sequence > MAX_SEQUENCE) {
-                timestamp = waitNextMillis(lastTimestamp);
+                timestamp = tilNextMillis(lastTimestamp);
                 sequence = 0L;
             }
         } else {
@@ -68,6 +82,9 @@ public class TimeSnowflake extends AbstractSnowflake implements Serializable {
             timePrefix = cachedTimePrefix;
         } else {
             timePrefix = formatTimestamp(timestamp);
+            if (timePrefix > MAX_TIME_PREFIX) {
+                throw new IllegalStateException("TimeSnowflake overflow: timePrefix=" + timePrefix + ", max=" + MAX_TIME_PREFIX);
+            }
             cachedTimestamp = timestamp;
             cachedTimePrefix = timePrefix;
         }
@@ -98,12 +115,20 @@ public class TimeSnowflake extends AbstractSnowflake implements Serializable {
         return result;
     }
 
-    private long waitNextMillis(long lastTimestamp) {
-        long timestamp = System.currentTimeMillis();
-        while (timestamp <= lastTimestamp) {
-            timestamp = System.currentTimeMillis();
+    private long tilNextMillis(long lastTimestamp) {
+        long timestamp = currentTimeMillis();
+        while (timestamp == lastTimestamp) {
+            timestamp = currentTimeMillis();
+        }
+        if (timestamp < lastTimestamp) {
+            throw new IllegalStateException(
+                    "Clock moved backwards. Refusing to generate id for " + (lastTimestamp - timestamp) + "ms");
         }
         return timestamp;
+    }
+
+    private long currentTimeMillis() {
+        return timeMillisSupplier.getAsLong();
     }
 
     // 解析方法

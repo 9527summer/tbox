@@ -1,4 +1,0 @@
-org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-org.tbox.base.core.config.BaseAutoConfiguration
-
-

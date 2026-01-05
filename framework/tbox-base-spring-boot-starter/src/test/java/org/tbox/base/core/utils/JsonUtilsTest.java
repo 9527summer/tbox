@@ -16,7 +16,6 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class JsonUtilsTest {
 
-    // 测试用POJO类
     static class User {
         private String name;
         private int age;
@@ -29,12 +28,29 @@ class JsonUtilsTest {
             this.age = age;
         }
 
-        public String getName() { return name; }
-        public void setName(String name) { this.name = name; }
-        public int getAge() { return age; }
-        public void setAge(int age) { this.age = age; }
-        public LocalDateTime getCreateTime() { return createTime; }
-        public void setCreateTime(LocalDateTime createTime) { this.createTime = createTime; }
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public int getAge() {
+            return age;
+        }
+
+        public void setAge(int age) {
+            this.age = age;
+        }
+
+        public LocalDateTime getCreateTime() {
+            return createTime;
+        }
+
+        public void setCreateTime(LocalDateTime createTime) {
+            this.createTime = createTime;
+        }
     }
 
     @Test
@@ -65,7 +81,6 @@ class JsonUtilsTest {
 
     @Test
     void testFromJson_IgnoreUnknownProperties() {
-        // 测试忽略未知属性
         String json = "{\"name\":\"王五\",\"age\":35,\"unknownField\":\"value\"}";
         User user = JsonUtils.fromJson(json, User.class);
 
@@ -152,7 +167,6 @@ class JsonUtilsTest {
     @Test
     void testGetObjectMapper() {
         assertNotNull(JsonUtils.getObjectMapper());
-        // 验证是同一个实例
         assertSame(JsonUtils.getObjectMapper(), JsonUtils.getObjectMapper());
     }
 
@@ -163,7 +177,6 @@ class JsonUtilsTest {
 
         String json = JsonUtils.toJson(user);
         assertNotNull(json);
-        // 验证时间不是以时间戳形式序列化
         assertFalse(json.matches(".*\"createTime\":\\d+.*"));
 
         User restored = JsonUtils.fromJson(json, User.class);
@@ -182,3 +195,4 @@ class JsonUtilsTest {
         assertEquals(tags, restored);
     }
 }
+

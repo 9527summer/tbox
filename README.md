@@ -1,15 +1,16 @@
 # TBox Framework
 
-TBox是一个轻量级的Java企业应用开发框架，提供开箱即用的脚手架组件，帮助开发者快速构建高质量的企业级应用。框架基于Spring Boot 2.x开发，完全兼容JDK 8，提供了分布式追踪、幂等性控制、分布式锁等常用功能。
+TBox 是一个轻量级的 Java 企业应用开发框架，提供开箱即用的 Starter 组件，帮助开发者快速构建企业级应用。当前仓库基于 **Spring Boot 3.x**（Jakarta）适配，要求 **JDK 17+**，提供分布式追踪、幂等性控制、分布式锁、分布式 ID/兑换编号等常用能力。
 
 ## 核心特性
 
 - **低侵入性**：所有组件采用AOP和自动配置方式实现，对业务代码无侵入
 - **模块化设计**：按功能划分多个独立Starter，可按需引入
-- **完善的分布式追踪**：支持HTTP请求、RPC调用、消息队列、定时任务的全链路追踪
+- **分布式追踪**：支持 HTTP 请求、消息队列、定时任务等链路打点（优先复用 Spring Boot 3 的观测/追踪生态）
 - **幂等性控制**：提供简单易用的幂等注解，支持多种幂等策略
 - **分布式锁工具**：基于Redis的分布式锁实现，支持可重入锁和自动续期
-- **性能监控**：与Spring Boot Actuator和Micrometer集成的性能指标采集
+- **分布式 ID / 兑换编号**：提供 Snowflake、时间型 ID、Base62 兑换码
+- **性能监控**：与 Spring Boot Actuator/Micrometer 集成的指标采集
 - **Spring生态兼容**：完全兼容Spring Boot生态系统，可与各种组件无缝集成
 
 ## 项目结构
@@ -17,17 +18,20 @@ TBox是一个轻量级的Java企业应用开发框架，提供开箱即用的脚
 ```
 tbox/
 ├── framework/                  # 核心框架模块
-│   ├── base-spring-boot-starter/           # 基础功能模块
+│   ├── tbox-base-spring-boot-starter/           # 基础功能模块
+│   ├── tbox-spring-support-spring-boot-starter/ # Spring 相关增强模块
 │   ├── tbox-distributedid-spring-boot-starter/ # 分布式ID/兑换码模块
-│   ├── dapper-spring-boot-starter/         # 分布式追踪模块  
-│   ├── idempotent-spring-boot-starter/     # 幂等性控制模块
+│   ├── tbox-dapper-spring-boot-starter/         # 分布式追踪模块
+│   ├── tbox-idempotent-spring-boot-starter/     # 幂等性控制模块
+│   ├── tbox-redis-spring-boot-starter/          # Redis相关能力模块
+│   ├── tbox-dependencies/                       # 统一依赖/版本管理（import 到 dependencyManagement）
 │   └── tbox-all-spring-boot-starter/       # 全功能包装模块
 └── tbox-demo/                 # 示例项目
 ```
 
 ## 模块介绍
 
-### base-spring-boot-starter
+### tbox-base-spring-boot-starter
 
 基础功能模块，提供常用工具类和核心抽象：
 
@@ -37,7 +41,15 @@ tbox/
 - **缓存工具**：Redis缓存抽象和工具类
 - **工具集**：JSON处理、ID生成、断言等工具类
 
-### dapper-spring-boot-starter
+### tbox-spring-support-spring-boot-starter
+
+Spring 相关增强模块（偏“应用层支撑”）：
+
+- **Spring 配置**：Jackson / WebMvc / CORS 等常用默认配置
+- **应用上下文**：`ApplicationContextHolder`
+- **统一异常处理**：默认全局异常处理器
+
+### tbox-dapper-spring-boot-starter
 
 分布式追踪模块，灵感来自Google Dapper论文：
 
@@ -47,7 +59,7 @@ tbox/
 - **异步任务追踪**：线程池和CompletableFuture的上下文传递
 - **指标收集**：请求数量、响应时间等性能指标收集
 
-### idempotent-spring-boot-starter
+### tbox-idempotent-spring-boot-starter
 
 幂等性控制模块，通过注解简化幂等实现：
 
@@ -56,23 +68,62 @@ tbox/
 - **超时控制**：支持幂等键的过期时间设置
 - **分布式支持**：基于Redis实现分布式幂等控制
 
+### tbox-distributedid-spring-boot-starter
+
+分布式 ID / 兑换编号模块：
+
+- **Snowflake ID**：高吞吐、趋势递增（long）
+- **时间型 ID**：`yyMMddHHmmssSSS + nodeId(2位) + seq(2位)`（long，便于人工排查）
+- **兑换编号**：基于 Snowflake long 的 Base62（`0-9a-zA-Z`）短码（String）
+
+### tbox-redis-spring-boot-starter
+
+Redis 相关能力模块：
+
+- **Redis 工具**：缓存、分布式锁等常用能力
+- **AOP 限流**：`@RateLimit`（滑动窗口 / 令牌桶），默认按 URL 维度限流
+
+### tbox-dependencies
+
+统一依赖与版本管理（import 到业务项目的 `dependencyManagement`），让业务模块只写依赖坐标，不写版本号。
+
 ## 快速开始
 
-### 1. 添加依赖
+### 1. 添加依赖（推荐：import 统一依赖/版本）
+
+在业务项目的 `pom.xml` 中只 import 一次 `tbox-dependencies`（负责把各类版本统一锁定到一个地方）：
+
+```xml
+<properties>
+    <tbox.version>1.0.4</tbox.version>
+</properties>
+
+<dependencyManagement>
+    <dependencies>
+        <dependency>
+            <groupId>io.github.9527summer</groupId>
+            <artifactId>tbox-dependencies</artifactId>
+            <version>${tbox.version}</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+    </dependencies>
+</dependencyManagement>
+```
+
+然后在 `dependencies` 里按需引入 Starter（不再写版本号）：
 
 ```xml
 <!-- 使用全部功能 -->
 <dependency>
-    <groupId>org.tbox</groupId>
+    <groupId>io.github.9527summer</groupId>
     <artifactId>tbox-all-spring-boot-starter</artifactId>
-    <version>1.0.0</version>
 </dependency>
 
 <!-- 或者单独使用某个模块 -->
 <dependency>
-    <groupId>org.tbox</groupId>
-    <artifactId>dapper-spring-boot-starter</artifactId>
-    <version>1.0.0</version>
+    <groupId>io.github.9527summer</groupId>
+    <artifactId>tbox-dapper-spring-boot-starter</artifactId>
 </dependency>
 ```
 
@@ -154,23 +205,22 @@ try {
 
 ## 高级配置
 
-### 追踪模块高级配置
-
-```yaml
-tbox:
-  tracer:      
-    # 暴露追踪指标到Actuator
-    expose-metrics: true
-```
-
-### 自定义排除路径
+### 追踪模块常用配置
 
 ```yaml
 tbox:
   tracer:
+    enabled: true
+    print-payload: true
+    max-response-length: 2048
     exclude-paths:
       - /api/health/**
       - /api/public/**
+
+    scheduler:
+      spring-scheduled-enabled: true
+      xxljob-enabled: true
+      quartz-enabled: true
 ```
 
 ## 监控与管理

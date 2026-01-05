@@ -18,11 +18,16 @@ import java.lang.reflect.Method;
 @Aspect
 public final class IdempotentAspect {
 
+    private final IdempotentExecuteHandlerFactory idempotentExecuteHandlerFactory;
+
+    public IdempotentAspect(IdempotentExecuteHandlerFactory idempotentExecuteHandlerFactory) {
+        this.idempotentExecuteHandlerFactory = idempotentExecuteHandlerFactory;
+    }
 
     @Around("@annotation(org.tbox.idempotent.annotation.Idempotent)")
     public Object idempotentHandler(ProceedingJoinPoint joinPoint) throws Throwable {
         Idempotent idempotent = getIdempotent(joinPoint);
-        IdempotentExecuteHandler instance = IdempotentExecuteHandlerFactory.getInstance(idempotent.type());
+        IdempotentExecuteHandler instance = idempotentExecuteHandlerFactory.getInstance(idempotent.type());
         Object resultObj;
         try {
             instance.execute(joinPoint, idempotent);

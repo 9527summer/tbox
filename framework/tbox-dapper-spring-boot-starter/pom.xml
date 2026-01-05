@@ -5,7 +5,7 @@
     <parent>
         <groupId>io.github.9527summer</groupId>
         <artifactId>tbox-framework</artifactId>
-        <version>${reversion}</version>
+        <version>${revision}</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -35,14 +35,6 @@
         <url>https://github.com/9527summer/tbox</url>
     </scm>
 
-    <properties>
-        <java.version>1.8</java.version>
-        <rocketmq.version>4.9.4</rocketmq.version>
-        <kafka.version>3.0.2</kafka.version>
-        <xxl-job.version>2.3.1</xxl-job.version>
-        <quartz.version>2.3.2</quartz.version>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -52,6 +44,16 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- Observation + Tracing（OTel） -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-tracing-bridge-otel</artifactId>
         </dependency>
         
         <!-- AOP依赖，用于WebTraceAspect切面 -->
@@ -63,66 +65,37 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-configuration-processor</artifactId>
+            <optional>true</optional>
         </dependency>
 
-        <!-- HTTP客户端依赖，设置为可选 -->
-        <dependency>
-            <groupId>com.squareup.okhttp3</groupId>
-            <artifactId>okhttp</artifactId>
-            <optional>true</optional>
-        </dependency>
-        
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <optional>true</optional>
-        </dependency>
-        
-        <!-- 消息队列依赖，设置为可选 -->
-        <!-- RocketMQ依赖 -->
-        <dependency>
-            <groupId>org.apache.rocketmq</groupId>
-            <artifactId>rocketmq-client</artifactId>
-            <version>${rocketmq.version}</version>
-            <optional>true</optional>
-        </dependency>
-        
-        <dependency>
-            <groupId>org.apache.rocketmq</groupId>
-            <artifactId>rocketmq-common</artifactId>
-            <version>${rocketmq.version}</version>
-            <optional>true</optional>
-        </dependency>
-        
-        <!-- Kafka依赖 -->
-        <dependency>
-            <groupId>org.apache.kafka</groupId>
-            <artifactId>kafka-clients</artifactId>
-            <version>${kafka.version}</version>
-            <optional>true</optional>
-        </dependency>
-        
+        <!-- MQ（可选）：Kafka 追踪串联（仅在引入 spring-kafka 时生效） -->
         <dependency>
             <groupId>org.springframework.kafka</groupId>
             <artifactId>spring-kafka</artifactId>
             <optional>true</optional>
         </dependency>
-        
+
+        <!-- MQ（可选）：RocketMQ 追踪串联（仅在引入 RocketMQ client 时生效） -->
+        <dependency>
+            <groupId>org.apache.rocketmq</groupId>
+            <artifactId>rocketmq-client</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- 消息队列依赖，设置为可选 -->
         <!-- 调度器依赖，设置为可选 -->
         <!-- XXL-Job依赖 -->
         <dependency>
             <groupId>com.xuxueli</groupId>
             <artifactId>xxl-job-core</artifactId>
-            <version>${xxl-job.version}</version>
             <optional>true</optional>
         </dependency>
 
 
-        <!-- tbox基础依赖 -->
+        <!-- tbox公共依赖 -->
         <dependency>
             <groupId>io.github.9527summer</groupId>
             <artifactId>tbox-base-spring-boot-starter</artifactId>
-            <version>${reversion}</version>
         </dependency>
         
         <!-- 测试依赖 -->

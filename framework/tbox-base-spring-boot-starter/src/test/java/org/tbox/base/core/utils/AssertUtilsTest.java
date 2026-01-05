@@ -220,9 +220,9 @@ class AssertUtilsTest {
 
     @Test
     void testComplexConditions() {
-        // 测试复杂条件
         int value = 10;
         assertDoesNotThrow(() -> AssertUtils.isTrue(value > 5 && value < 20, "VALUE_RANGE", "值必须在5-20之间"));
         assertThrows(BizException.class, () -> AssertUtils.isTrue(value > 100, "VALUE_RANGE", "值必须大于100"));
     }
 }
+

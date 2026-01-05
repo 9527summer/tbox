@@ -1,17 +1,20 @@
 # TBox-Tracer 分布式追踪系统
 
-TBox-Tracer 是一个轻量级的分布式追踪系统，基于Google Dapper论文的设计理念实现。它专为JDK 8和Spring Boot 2.x环境打造，提供了低侵入性的追踪功能，能够帮助开发者监控和分析微服务调用链路。
+TBox-Tracer 是一个面向 **Spring Boot 3（Spring Framework 6）** 的轻量追踪适配层：以 **Micrometer Observation** 为统一入口，并使用 **Micrometer Tracing（OpenTelemetry bridge）** 输出 Trace/Span。
+
+> 说明：历史上的 `TraceContext`（ThreadLocal 自研上下文）已删除；新系统建议全部基于 Observation/OTel。
 
 ## 主要特性
 
-- **HTTP请求追踪**：自动追踪进出的HTTP请求，包括Spring MVC控制器和HTTP客户端（RestTemplate、OkHttp、Apache HttpClient）
-- **消息队列追踪**：支持RocketMQ和Kafka的消息发送和消费追踪，保持调用链路完整
-- **调度任务追踪**：支持Spring @Scheduled、XXL-Job和Quartz等主流调度框架的任务执行追踪
-- **异步线程追踪**：通过自定义的线程池和装饰器，确保异步任务执行时追踪上下文正确传递
-- **性能指标收集**：集成Spring Boot Actuator和Micrometer，提供丰富的性能指标
+- **HTTP 请求追踪**：复用 Spring Boot 3 的 Web Observation/Tracing
+- **响应头回显**：在响应头写入 `traceId` / `spanId`，便于排查
+- **日志关联**：日志模板可输出 `traceId` / `spanId`（由 Spring Boot Tracing 自动写入 MDC）
+- **调度任务追踪**：对 `@Scheduled` / `@XxlJob` 增加 Observation（生成 span）
+- **异步上下文传播**：基于 Spring 的 `ContextPropagatingTaskDecorator` 传播上下文（Observation/Tracing/MDC）
+- **OTLP HTTP 导出**：通过 OTel exporter 将 traces 发送到 OTel Collector（HTTP）
 - **简单配置**：追求开箱即用，提供合理的默认值和简单的配置选项
 - **低侵入性**：与业务代码解耦，无需修改现有代码即可启用追踪功能
-- **高可扩展性**：提供扩展点，可以轻松添加自定义组件和集成第三方系统
+- **标准化传播**：默认采用 W3C TraceContext 进行跨进程传播
 
 ## 快速开始
 
@@ -21,27 +24,40 @@ TBox-Tracer 是一个轻量级的分布式追踪系统，基于Google Dapper论�
 
 ```xml
 <dependency>
-    <groupId>org.tbox</groupId>
-    <artifactId>dapper-spring-boot-starter</artifactId>
+    <groupId>io.github.9527summer</groupId>
+    <artifactId>tbox-dapper-spring-boot-starter</artifactId>
     <version>${tbox.version}</version>
 </dependency>
 ```
 
-### 2. 添加配置（可选）
+### 2. 配置（推荐：W3C，仅用于日志串链路）
 
-在`application.yml`中添加配置（默认已启用，无需额外配置）：
+在 `application.yml` 中添加：
 
 ```yaml
 tbox:
   tracer:
     enabled: true
-    application-name: your-application-name
-    # 其他可选配置...
+    print-payload: true
+    max-response-length: 2048
+
+management:
+  tracing:
+    enabled: true
+    sampling:
+      probability: 1.0
+    propagation:
+      type: w3c
 ```
 
 ### 3. 启动应用
 
-启动应用后，TBox-Tracer将自动开始工作，为所有进出的HTTP请求、消息队列操作和调度任务添加追踪信息。
+启动应用后：
+
+- Web 请求会自动生成 trace/span（由 Spring Boot 3 Web Observation/Tracing 完成）
+- 响应头回显 `traceId` / `spanId`
+- 日志可输出 `traceId/spanId`（MDC）
+- 本 Starter 默认不包含 OTLP exporter 依赖，不做上报；如需上报建议由其它模块/agent 统一接入
 
 ## 详细配置指南
 
@@ -55,7 +71,7 @@ tbox:
     application-name: your-app-name       # 应用名称，默认使用spring.application.name
     print-payload: true                   # 是否打印请求和响应内容，默认true（生产环境建议关闭）
     max-response-length: 2048             # 响应内容最大记录长度，超过将被截断
-    expose-metrics: false                 # 是否暴露追踪指标到Actuator
+	    # expose-metrics: 由 Actuator/Micrometer 决定（此处不再提供自研开关）
     
     # 排除路径配置
     exclude-paths:                        # 不进行追踪的URL路径
@@ -82,41 +98,21 @@ management:
 
 ## 核心组件说明
 
-### 1. TraceContext
+### 1. Observation / Tracing（OTel）
 
-`TraceContext`是TBox-Tracer的核心组件，用于存储和传递追踪信息。主要方法：
+TBox-Tracer 的核心是 Micrometer Observation/Tracing：
 
-- `newRootContext()`：创建新的根上下文
-- `createChildContext()`：创建子上下文
-- `setCurrentContext()`：设置当前线程的上下文
-- `removeContext()`：清除当前线程的上下文
-- `setAttribute(key, value)`：设置上下文属性
+- Observation：统一的观测 API（span/metrics/events）
+- Tracing（OTel bridge）：将 Observation 转换为 trace/span，并通过 OTLP 导出
 
 ### 2. Web请求追踪
 
-TBox-Tracer自动为Spring MVC应用添加拦截器和过滤器，对所有HTTP请求进行追踪：
+对 Web 场景：
 
-- `TracerWebInterceptor`：处理请求追踪上下文的创建和传递
-- `TracerFilter`：在请求头中添加追踪信息
+- 复用 Spring Boot 3 的 Web Observation/Tracing
+- 由 Spring Boot Tracing 自动写入 MDC（日志模板可直接使用 `%X{traceId}` / `%X{spanId}`）
 
-### 3. HTTP客户端追踪
-
-支持主流的HTTP客户端库：
-
-- `TracerRestTemplateInterceptor`：RestTemplate客户端拦截器
-- `TracerOkHttpInterceptor`：OkHttp客户端拦截器
-- `TracerHttpClientInterceptor`：Apache HttpClient拦截器
-
-### 4. 消息队列追踪
-
-支持RocketMQ和Kafka：
-
-- `TracingRocketMQProducerHook`：RocketMQ生产者钩子
-- `TracingRocketMQConsumerHook`：RocketMQ消费者钩子
-- `TracingKafkaProducerInterceptor`：Kafka生产者拦截器
-- `TracingKafkaConsumerInterceptor`：Kafka消费者拦截器
-
-### 5. 调度任务追踪
+### 3. 调度任务追踪
 
 支持多种调度框架：
 
@@ -179,27 +175,19 @@ public class ThreadPoolConfig {
 }
 ```
 
-### 3. 手动创建根上下文
+### 3. 手动创建 Observation（可选）
 
-在某些特殊场景（如消息处理、批处理任务）中，需要手动创建根上下文：
+在某些非 Web 场景（如批处理任务）中，可以手动创建 Observation（会生成 span 并参与导出）：
 
 ```java
-@Component
-public class BatchProcessor {
-
-    public void processBatch(List<String> items) {
-        // 创建根追踪上下文
-        TraceContext rootContext = TraceContext.newRootContext();
-        rootContext.setAttribute("batch.size", String.valueOf(items.size()));
-        rootContext.setAttribute("batch.type", "daily-report");
-        
-        try {
-            // 批处理逻辑...
-        } finally {
-            // 清理上下文
-            TraceContext.removeContext();
-        }
-    }
+Observation observation = Observation.start("batch.process", observationRegistry);
+try {
+  // 批处理逻辑...
+} catch (Throwable e) {
+  observation.error(e);
+  throw e;
+} finally {
+  observation.stop();
 }
 ```
 
@@ -228,8 +216,8 @@ tbox:
 **问题**：在异步环境中，追踪上下文丢失导致无法追踪完整调用链路。
 
 **解决方案**：
-- 确保使用`TracingTaskDecorator`装饰线程池
-- 检查是否手动调用了`TraceContext.removeContext()`导致上下文被清除
+- 确保线程池使用上下文传播（本 Starter 会自动为 `ThreadPoolTaskExecutor` 增加 `TaskDecorator`）
+- 确保没有自行创建“无上下文”的新线程（推荐使用 Spring 管理的线程池/TaskExecutor）
 
 ### 2. 重复的追踪ID问题
 
@@ -308,50 +296,29 @@ management:
 ```
 
 
-### 与RocketMQ集成
+### 与消息队列集成（建议走 OTel 生态）
 
-```java
-@Configuration
-public class RocketMQConfig {
+本 Starter 仍建议优先采用 OTel 生态方案（如 OTel Java agent / 相关 instrumentation），保持一致的 W3C 传播与 OTLP 导出。
 
-    @Autowired
-    private TracerProperties tracerProperties;
+同时，为了满足“仅在日志中串联 MQ trace”的轻量需求，Starter 提供了 **Kafka（Spring Kafka）** 的最小能力：
 
-    @Bean
-    public DefaultMQProducer defaultMQProducer() throws MQClientException {
-        DefaultMQProducer producer = new DefaultMQProducer("producer-group");
-        producer.setNamesrvAddr("rocketmq-server:9876");
-        
-        // 添加追踪钩子
-        producer.getDefaultMQProducerImpl().registerSendMessageHook(
-            new TracingRocketMQProducerHook(tracerProperties.getApplicationName())
-        );
-        
-        producer.start();
-        return producer;
-    }
-    
-    @Bean
-    public DefaultMQPushConsumer defaultMQPushConsumer() throws MQClientException {
-        DefaultMQPushConsumer consumer = new DefaultMQPushConsumer("consumer-group");
-        consumer.setNamesrvAddr("rocketmq-server:9876");
-        consumer.subscribe("test-topic", "*");
-        
-        // 添加追踪钩子
-        consumer.getDefaultMQPushConsumerImpl().registerConsumeMessageHook(
-            new TracingRocketMQConsumerHook(tracerProperties.getApplicationName())
-        );
-        
-        consumer.registerMessageListener((MessageListenerConcurrently) (msgs, context) -> {
-            // 消费逻辑
-            return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
-        });
-        
-        consumer.start();
-        return consumer;
-    }
-}
-```
+- 生产端：发送时自动往 Kafka headers 写入 `traceparent`
+- 消费端：在监听方法执行前，从 headers 提取 `traceId/spanId` 写入 MDC（`%X{traceId}` / `%X{spanId}`）
+
+启用条件：
+
+- 依赖中存在 `spring-kafka`（或 `spring-boot-starter-kafka`）
+- `tbox.tracer.enabled=true`（默认 true）
+
+同时支持 **RocketMQ（rocketmq-client / rocketmq-spring）**：
+
+- 生产端：发送前把 `traceparent` 写入 Message user properties
+- 消费端：消费前从 Message user properties 读取 `traceparent` 并写入 MDC（`%X{traceId}` / `%X{spanId}`）
+
+启用条件：
+
+- 依赖中存在 `rocketmq-client`（或引入 `rocketmq-spring-boot-starter` 间接带上 client）
+- `tbox.tracer.enabled=true`（默认 true）
 
 ## 设计原理
 
@@ -359,20 +326,20 @@ TBox-Tracer基于Google Dapper论文的设计理念，主要概念包括：
 
 - **TraceId**：全局唯一的标识符，用于关联整个调用链路
 - **SpanId**：标识一次操作或调用
-- **TraceContext**：包含追踪信息的上下文，传递于服务之间
+- **Context（W3C TraceContext）**：跨进程传播的上下文（`traceparent`/`tracestate`）
 
-系统通过在HTTP头、消息属性等载体中传递这些信息，实现跨服务、跨线程的调用链路追踪。核心流程包括：
+系统通过在 HTTP 头等载体中传递这些信息，实现跨服务、跨线程的调用链路追踪。核心流程包括：
 
-1. 请求入口创建根上下文
-2. 当服务调用其他服务时，创建子上下文并传递追踪信息
-3. 所有操作（数据库访问、缓存、消息发送等）都附加追踪信息
-4. 通过日志记录或指标收集追踪数据
+1. 请求入口创建根 span（由 Spring Boot Web Observation/Tracing 完成）
+2. 下游调用自动创建子 span，并通过 W3C 头部传播
+3. 通过 OTLP HTTP 上报到 OTel Collector
+4. 日志通过 MDC 关联 traceId/spanId（并支持在响应头回显）
 
 ## 版本兼容性
 
-- Java 8+
-- Spring Boot 2.x
-- Spring Framework 5.x
+- Java 17+
+- Spring Boot 3.x
+- Spring Framework 6.x
 
 ## 扩展TBox-Tracer
 

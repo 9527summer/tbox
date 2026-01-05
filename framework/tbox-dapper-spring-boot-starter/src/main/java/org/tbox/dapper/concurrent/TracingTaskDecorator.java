@@ -1,20 +1,19 @@
 package org.tbox.dapper.concurrent;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.core.task.TaskDecorator;
-import org.tbox.dapper.context.TraceContext;
+import org.springframework.core.task.support.ContextPropagatingTaskDecorator;
 
 /**
- * 线程池追踪任务装饰器
- * 负责在任务执行时传递追踪上下文到异步线程
+ * 基于 Spring Boot 3 / Spring Framework 的上下文传播任务装饰器。
+ *
+ * <p>基于 Spring 6 的 {@link ContextPropagatingTaskDecorator}（内部基于 Micrometer Context Propagation），
+ * 用于传播 Observation/Tracing/MDC 等上下文。</p>
  */
 public class TracingTaskDecorator implements TaskDecorator {
 
-    private static final Logger log = LoggerFactory.getLogger(TracingTaskDecorator.class);
+    private final TaskDecorator delegate = new ContextPropagatingTaskDecorator();
 
     public TracingTaskDecorator() {
-        // 不需要任何参数
     }
 
     @Override
@@ -22,22 +21,6 @@ public class TracingTaskDecorator implements TaskDecorator {
         if (runnable == null) {
             return null;
         }
-
-        // 获取当前线程的追踪上下文
-        TraceContext currentContext = TraceContext.getCurrentContext();
-        return () -> {
-
-            try {
-                // 恢复捕获的追踪上下文
-                if (currentContext != null) {
-                    TraceContext.setCurrentContext(currentContext);
-                }
-
-                // 执行原始任务
-                runnable.run();
-            } finally {
-                TraceContext.removeContext();
-            }
-        };
+        return delegate.decorate(runnable);
     }
-} 
+}
