@@ -6,6 +6,7 @@ Redis 相关能力 Starter（Spring Boot 3 / JDK 17+）。
 
 - Redis 工具与封装（`RedisUtils`、分布式锁等）
 - AOP 限流注解：`@RateLimit`（滑动窗口 / 令牌桶）
+- 可选的 Redis 序列化配置：`RedisSerializerConfig`（需业务侧手动启用）
 
 ## 快速开始
 
@@ -42,6 +43,19 @@ public class DemoController {
 }
 ```
 
+### 3.（可选）启用默认 Redis 序列化
+
+本 Starter 不再自动注册 `RedisTemplate`/`StringRedisTemplate`（避免与业务侧配置或 Redisson 自动装配冲突）。
+
+如需要使用 tbox 提供的默认序列化方式，可在业务侧手动启用：
+
+```java
+@Configuration
+@Import(org.tbox.base.redis.config.RedisSerializerConfig.class)
+public class RedisConfig {
+}
+```
+
 ## 限流模型
 
 ### 1) 滑动窗口（Redis ZSet + Lua）
@@ -62,4 +76,3 @@ public class DemoController {
 可按需在日志框架里单独配置该类的日志级别：
 
 - `org.tbox.redis.ratelimit.aspect.RateLimitAspect`
-
