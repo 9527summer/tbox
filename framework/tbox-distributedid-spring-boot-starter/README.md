@@ -18,6 +18,8 @@
 </dependency>
 ```
 
+> 注意：本模块对 `spring-boot-starter-data-redis` 依赖是可选的。若要启用“Redis 模式分配 nodeId”，业务项目还需要额外引入并配置 Redis（见下文）。
+
 ### 2) 生成 ID
 
 ```java
@@ -71,7 +73,7 @@ List<String> codes = org.tbox.distributedid.utils.RedeemCodeUtils.nextRedeemCode
 
 ### Redis 模式（推荐集群）
 
-当 classpath 存在 `RedisTemplate` 时：
+当 classpath 存在 `StringRedisTemplate`（通常来自 `spring-boot-starter-data-redis`）时：
 
 - 默认 Snowflake：`org.tbox.distributedid.core.RedisIdGenerator`
   - 申请 key：`tbox:ids:registry:${spring.application.name}`
