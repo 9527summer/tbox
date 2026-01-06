@@ -112,7 +112,7 @@ public class WebTraceAspect {
     private void logRequest(String methodName, String clientIp, String requestMethod, String uri, Object[] args) {
         try {
             String argsJson = JsonUtils.toJson(args);
-            String message = String.format("[%s] 接口请求:%s %s | IP:%s | %s: %s",
+            String message = String.format("[%s] 接口请求 | %s:%s | IP:%s | %s: %s",
                     methodName, requestMethod, uri, clientIp, REQ_PREFIX, argsJson);
             logWithLevel(message);
         } catch (Exception e) {
