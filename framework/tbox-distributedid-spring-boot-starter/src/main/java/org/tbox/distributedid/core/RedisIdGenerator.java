@@ -7,7 +7,7 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.EnvironmentAware;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.scripting.support.ResourceScriptSource;
 
@@ -27,13 +27,13 @@ public class RedisIdGenerator extends SnowflakeIdGenerator implements Initializi
     // 心跳间隔 30秒
     private static final long HEARTBEAT_INTERVAL = 30;
 
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final StringRedisTemplate redisTemplate;
     private Environment environment;
     private String registryKey;
     private ScheduledExecutorService heartbeatExecutor;
     private volatile Long currentNodeId;
 
-    public RedisIdGenerator(RedisTemplate<String, Object> redisTemplate) {
+    public RedisIdGenerator(StringRedisTemplate redisTemplate) {
         this.redisTemplate = redisTemplate;
     }
 
@@ -52,14 +52,14 @@ public class RedisIdGenerator extends SnowflakeIdGenerator implements Initializi
         redisScript.setScriptSource(new ResourceScriptSource(new ClassPathResource("lua/chooseWorkIdLua.lua")));
         redisScript.setResultType(Long.class);
 
-        // Args: Now, ExpireTime, MaxId
-        Object[] args = new Object[]{
+        // Args: Now, ExpireTime, MaxId（必须为纯字符串，否则 Lua tonumber 可能失败）
+        String[] args = new String[]{
                 String.valueOf(System.currentTimeMillis()),
                 String.valueOf(EXPIRE_TIME),
-                NODE_ID_MAX
+                String.valueOf(NODE_ID_MAX)
         };
 
-        Long nodeId = redisTemplate.execute(redisScript, Collections.singletonList(registryKey), args);
+        Long nodeId = redisTemplate.execute(redisScript, Collections.singletonList(registryKey), (Object[]) args);
         if (nodeId == null || nodeId < 0 || nodeId > NODE_ID_MAX) {
             log.error("Redis 分配 NodeId 失败, appName={}, nodeId={}", appName, nodeId);
             throw new IllegalStateException("Redis 分配 NodeId 失败");
@@ -83,7 +83,7 @@ public class RedisIdGenerator extends SnowflakeIdGenerator implements Initializi
 
                 // ZADD key score member
                 double newScore = System.currentTimeMillis() + EXPIRE_TIME;
-                redisTemplate.opsForZSet().add(registryKey, currentNodeId, newScore);
+                redisTemplate.opsForZSet().add(registryKey, String.valueOf(currentNodeId), newScore);
 
                 if (log.isTraceEnabled()) {
                     log.trace("NodeId 心跳续期成功: {}", currentNodeId);
@@ -106,7 +106,7 @@ public class RedisIdGenerator extends SnowflakeIdGenerator implements Initializi
         }
         try {
             if (registryKey != null && currentNodeId != null) {
-                redisTemplate.opsForZSet().remove(registryKey, currentNodeId);
+                redisTemplate.opsForZSet().remove(registryKey, String.valueOf(currentNodeId));
             }
         } catch (Exception e) {
             log.warn("NodeId 释放失败: {}", currentNodeId, e);

@@ -28,6 +28,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.validation.ConstraintViolationException;
 import java.util.StringJoiner;
 
+@RestControllerAdvice
 public class DefaultGlobalExceptionHandler {
     private static final Logger log = LoggerFactory.getLogger(DefaultGlobalExceptionHandler.class);
 

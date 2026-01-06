@@ -1,0 +1,4 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+org.tbox.redis.config.TboxRedisAutoConfiguration,\
+org.tbox.redis.ratelimit.config.RedisRateLimitAutoConfiguration
+

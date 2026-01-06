@@ -44,6 +44,16 @@
 
         <dependency>
             <groupId>io.github.9527summer</groupId>
+            <artifactId>tbox-spring-support-spring-boot-starter</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.github.9527summer</groupId>
+            <artifactId>tbox-redis-spring-boot-starter</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.github.9527summer</groupId>
             <artifactId>tbox-idempotent-spring-boot-starter</artifactId>
         </dependency>
 
@@ -96,14 +106,16 @@
                 <version>3.2.4</version>
                 <configuration>
                     <!-- 包含所有子模块到聚合jar中 -->
-                    <artifactSet>
-                        <includes>
-                            <include>io.github.9527summer:tbox-base-spring-boot-starter</include>
-                            <include>io.github.9527summer:tbox-idempotent-spring-boot-starter</include>
-                            <include>io.github.9527summer:tbox-dapper-spring-boot-starter</include>
-                            <include>io.github.9527summer:tbox-distributedid-spring-boot-starter</include>
-                        </includes>
-                    </artifactSet>
+                        <artifactSet>
+                            <includes>
+                                <include>io.github.9527summer:tbox-base-spring-boot-starter</include>
+                                <include>io.github.9527summer:tbox-spring-support-spring-boot-starter</include>
+                                <include>io.github.9527summer:tbox-redis-spring-boot-starter</include>
+                                <include>io.github.9527summer:tbox-idempotent-spring-boot-starter</include>
+                                <include>io.github.9527summer:tbox-dapper-spring-boot-starter</include>
+                                <include>io.github.9527summer:tbox-distributedid-spring-boot-starter</include>
+                            </includes>
+                        </artifactSet>
                     <filters>
                         <filter>
                             <artifact>*:*</artifact>

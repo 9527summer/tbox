@@ -4,7 +4,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.tbox.distributedid.core.RandomIdGenerator;
 import org.tbox.distributedid.core.RedisIdGenerator;
 import org.tbox.distributedid.core.TimeRandomIdGenerator;
@@ -30,17 +30,17 @@ public class IdGeneratorAutoConfiguration {
 
 
     @Configuration
-    @ConditionalOnClass(name = "org.springframework.data.redis.core.RedisTemplate")
+    @ConditionalOnClass(name = "org.springframework.data.redis.core.StringRedisTemplate")
     public static class RedisIdGeneratorConfiguration {
         @Bean
         @ConditionalOnMissingBean
-        public RedisIdGenerator redisIdGenerator(RedisTemplate<String, Object> redisTemplate) {
+        public RedisIdGenerator redisIdGenerator(StringRedisTemplate redisTemplate) {
             return new RedisIdGenerator(redisTemplate);
         }
 
         @Bean
         @ConditionalOnMissingBean
-        public TimeRedisIdGenerator timeRedisIdGenerator(RedisTemplate<String, Object> redisTemplate) {
+        public TimeRedisIdGenerator timeRedisIdGenerator(StringRedisTemplate redisTemplate) {
             return new TimeRedisIdGenerator(redisTemplate);
         }
         

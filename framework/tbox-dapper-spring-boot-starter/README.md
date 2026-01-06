@@ -21,8 +21,8 @@ TBox-Tracer 是一个轻量级的分布式追踪系统，基于Google Dapper论�
 
 ```xml
 <dependency>
-    <groupId>org.tbox</groupId>
-    <artifactId>dapper-spring-boot-starter</artifactId>
+    <groupId>io.github.9527summer</groupId>
+    <artifactId>tbox-dapper-spring-boot-starter</artifactId>
     <version>${tbox.version}</version>
 </dependency>
 ```

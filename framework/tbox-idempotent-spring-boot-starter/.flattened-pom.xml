@@ -34,9 +34,7 @@
     <maven-shade-plugin.version>3.2.4</maven-shade-plugin.version>
     <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <redisson.version>3.21.3</redisson.version>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <spring-boot.version>2.6.13</spring-boot.version>
   </properties>
   <dependencies>
     <dependency>
@@ -54,6 +52,18 @@
     <dependency>
       <groupId>io.github.9527summer</groupId>
       <artifactId>tbox-base-spring-boot-starter</artifactId>
+      <version>1.0.4</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.github.9527summer</groupId>
+      <artifactId>tbox-spring-support-spring-boot-starter</artifactId>
+      <version>1.0.4</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.github.9527summer</groupId>
+      <artifactId>tbox-redis-spring-boot-starter</artifactId>
       <version>1.0.4</version>
       <scope>compile</scope>
     </dependency>

@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>io.github.9527summer</groupId>
+        <artifactId>tbox-all</artifactId>
+        <version>${reversion}</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>tbox-dependencies</artifactId>
+    <packaging>pom</packaging>
+
+    <name>tbox-dependencies</name>
+    <description>TBox dependency management (BOM)</description>
+    <url>https://github.com/9527summer/tbox</url>
+
+    <properties>
+        <spring-boot.version>2.6.13</spring-boot.version>
+
+        <redisson.version>3.21.3</redisson.version>
+        <knife4j.version>4.5.0</knife4j.version>
+        <rocketmq.version>4.9.4</rocketmq.version>
+        <kafka.version>3.0.2</kafka.version>
+        <xxl-job.version>2.3.1</xxl-job.version>
+        <zero-allocation-hashing.version>0.16</zero-allocation-hashing.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring-boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- TBox modules -->
+            <dependency>
+                <groupId>io.github.9527summer</groupId>
+                <artifactId>tbox-base-spring-boot-starter</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.9527summer</groupId>
+                <artifactId>tbox-spring-support-spring-boot-starter</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.9527summer</groupId>
+                <artifactId>tbox-redis-spring-boot-starter</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.9527summer</groupId>
+                <artifactId>tbox-idempotent-spring-boot-starter</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.9527summer</groupId>
+                <artifactId>tbox-dapper-spring-boot-starter</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.9527summer</groupId>
+                <artifactId>tbox-distributedid-spring-boot-starter</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.9527summer</groupId>
+                <artifactId>tbox-all-spring-boot-starter</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- Third-party pinned versions -->
+            <dependency>
+                <groupId>org.redisson</groupId>
+                <artifactId>redisson-spring-boot-starter</artifactId>
+                <version>${redisson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.xiaoymin</groupId>
+                <artifactId>knife4j-openapi3-spring-boot-starter</artifactId>
+                <version>${knife4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.rocketmq</groupId>
+                <artifactId>rocketmq-client</artifactId>
+                <version>${rocketmq.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.rocketmq</groupId>
+                <artifactId>rocketmq-common</artifactId>
+                <version>${rocketmq.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.kafka</groupId>
+                <artifactId>kafka-clients</artifactId>
+                <version>${kafka.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.xuxueli</groupId>
+                <artifactId>xxl-job-core</artifactId>
+                <version>${xxl-job.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>net.openhft</groupId>
+                <artifactId>zero-allocation-hashing</artifactId>
+                <version>${zero-allocation-hashing.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+</project>
+

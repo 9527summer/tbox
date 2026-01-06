@@ -12,7 +12,7 @@
 
 ```xml
 <dependency>
-  <groupId>org.tbox</groupId>
+  <groupId>io.github.9527summer</groupId>
   <artifactId>tbox-distributedid-spring-boot-starter</artifactId>
   <version>${tbox.version}</version>
 </dependency>
@@ -105,4 +105,3 @@ List<String> codes = org.tbox.distributedid.utils.RedeemCodeUtils.nextRedeemCode
 
 - 基于 Snowflake `long` 进行 Base62 编码（字符集 `0-9a-zA-Z`）
 - 字符串长度通常不超过 **11**（因为 `2^64` 的 Base62 表示最多 11 位）
-

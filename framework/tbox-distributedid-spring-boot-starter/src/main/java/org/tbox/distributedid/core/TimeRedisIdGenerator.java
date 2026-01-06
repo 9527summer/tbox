@@ -7,7 +7,7 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.EnvironmentAware;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.scripting.support.ResourceScriptSource;
 
@@ -30,13 +30,13 @@ public class TimeRedisIdGenerator extends TimeSnowflakeIdGenerator implements In
     // 心跳间隔 30秒
     private static final long HEARTBEAT_INTERVAL = 30;
 
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final StringRedisTemplate redisTemplate;
     private Environment environment;
     private String registryKey;
     private ScheduledExecutorService heartbeatExecutor;
     private volatile Long currentNodeId;
 
-    public TimeRedisIdGenerator(RedisTemplate<String, Object> redisTemplate) {
+    public TimeRedisIdGenerator(StringRedisTemplate redisTemplate) {
         this.redisTemplate = redisTemplate;
     }
 
@@ -54,13 +54,13 @@ public class TimeRedisIdGenerator extends TimeSnowflakeIdGenerator implements In
         redisScript.setScriptSource(new ResourceScriptSource(new ClassPathResource("lua/chooseWorkIdLua.lua")));
         redisScript.setResultType(Long.class);
 
-        Object[] args = new Object[]{
+        String[] args = new String[]{
                 String.valueOf(System.currentTimeMillis()),
                 String.valueOf(EXPIRE_TIME),
-                NODE_ID_MAX
+                String.valueOf(NODE_ID_MAX)
         };
 
-        Long nodeId = redisTemplate.execute(redisScript, Collections.singletonList(registryKey), args);
+        Long nodeId = redisTemplate.execute(redisScript, Collections.singletonList(registryKey), (Object[]) args);
         if (nodeId == null || nodeId < 0 || nodeId > NODE_ID_MAX) {
             log.error("Redis 分配 TimeSnowflake NodeId 失败, appName={}, nodeId={}", appName, nodeId);
             throw new IllegalStateException("Redis 分配 TimeSnowflake NodeId 失败");
@@ -82,7 +82,7 @@ public class TimeRedisIdGenerator extends TimeSnowflakeIdGenerator implements In
             try {
                 if (currentNodeId == null) return;
                 double newScore = System.currentTimeMillis() + EXPIRE_TIME;
-                redisTemplate.opsForZSet().add(registryKey, currentNodeId, newScore);
+                redisTemplate.opsForZSet().add(registryKey, String.valueOf(currentNodeId), newScore);
             } catch (Exception e) {
                 log.error("TimeSnowflake NodeId 心跳异常", e);
             }
@@ -101,7 +101,7 @@ public class TimeRedisIdGenerator extends TimeSnowflakeIdGenerator implements In
         }
         try {
             if (registryKey != null && currentNodeId != null) {
-                redisTemplate.opsForZSet().remove(registryKey, currentNodeId);
+                redisTemplate.opsForZSet().remove(registryKey, String.valueOf(currentNodeId));
             }
         } catch (Exception e) {
             log.warn("TimeSnowflake NodeId 释放失败: {}", currentNodeId, e);

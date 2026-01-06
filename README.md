@@ -17,27 +17,42 @@ TBox是一个轻量级的Java企业应用开发框架，提供开箱即用的脚
 ```
 tbox/
 ├── framework/                  # 核心框架模块
-│   ├── base-spring-boot-starter/           # 基础功能模块
+│   ├── tbox-base-spring-boot-starter/           # 基础功能模块
+│   ├── tbox-spring-support-spring-boot-starter/ # Spring 相关增强模块
+│   ├── tbox-redis-spring-boot-starter/          # Redis相关能力模块
 │   ├── tbox-distributedid-spring-boot-starter/ # 分布式ID/兑换码模块
-│   ├── dapper-spring-boot-starter/         # 分布式追踪模块  
-│   ├── idempotent-spring-boot-starter/     # 幂等性控制模块
+│   ├── tbox-dapper-spring-boot-starter/         # 分布式追踪模块
+│   ├── tbox-idempotent-spring-boot-starter/     # 幂等性控制模块
+│   ├── tbox-dependencies/                       # 统一依赖/版本管理（import 到 dependencyManagement）
 │   └── tbox-all-spring-boot-starter/       # 全功能包装模块
 └── tbox-demo/                 # 示例项目
 ```
 
 ## 模块介绍
 
-### base-spring-boot-starter
+### tbox-base-spring-boot-starter
 
 基础功能模块，提供常用工具类和核心抽象：
 
 - **统一响应**：标准化的API响应格式
-- **异常处理**：全局异常处理机制
-- **分布式锁**：基于Redis的分布式锁实现
-- **缓存工具**：Redis缓存抽象和工具类
 - **工具集**：JSON处理、ID生成、断言等工具类
 
-### dapper-spring-boot-starter
+### tbox-spring-support-spring-boot-starter
+
+Spring 相关增强模块（偏“应用层支撑”）：
+
+- **Spring 配置**：Jackson / WebMvc / CORS 等常用默认配置
+- **应用上下文**：`ApplicationContextHolder`
+- **统一异常处理**：默认全局异常处理器
+
+### tbox-redis-spring-boot-starter
+
+Redis 相关能力模块：
+
+- **Redis 工具**：缓存、分布式锁等常用能力
+- **AOP 限流**：`@RateLimit`（滑动窗口 / 令牌桶），默认按 URL 维度限流
+
+### tbox-dapper-spring-boot-starter
 
 分布式追踪模块，灵感来自Google Dapper论文：
 
@@ -47,7 +62,7 @@ tbox/
 - **异步任务追踪**：线程池和CompletableFuture的上下文传递
 - **指标收集**：请求数量、响应时间等性能指标收集
 
-### idempotent-spring-boot-starter
+### tbox-idempotent-spring-boot-starter
 
 幂等性控制模块，通过注解简化幂等实现：
 
@@ -56,23 +71,47 @@ tbox/
 - **超时控制**：支持幂等键的过期时间设置
 - **分布式支持**：基于Redis实现分布式幂等控制
 
+### tbox-dependencies
+
+统一依赖与版本管理（import 到业务项目的 `dependencyManagement`），让业务模块只写依赖坐标，不写版本号。
+
 ## 快速开始
 
-### 1. 添加依赖
+### 1. 添加依赖（推荐：import 统一依赖/版本）
+
+在业务项目的 `pom.xml` 中只 import 一次 `tbox-dependencies`：
+
+```xml
+<properties>
+    <tbox.version>1.0.4</tbox.version>
+</properties>
+
+<dependencyManagement>
+    <dependencies>
+        <dependency>
+            <groupId>io.github.9527summer</groupId>
+            <artifactId>tbox-dependencies</artifactId>
+            <version>${tbox.version}</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+    </dependencies>
+</dependencyManagement>
+```
+
+然后在 `dependencies` 里按需引入 Starter（不再写版本号）：
 
 ```xml
 <!-- 使用全部功能 -->
 <dependency>
-    <groupId>org.tbox</groupId>
+    <groupId>io.github.9527summer</groupId>
     <artifactId>tbox-all-spring-boot-starter</artifactId>
-    <version>1.0.0</version>
 </dependency>
 
 <!-- 或者单独使用某个模块 -->
 <dependency>
-    <groupId>org.tbox</groupId>
-    <artifactId>dapper-spring-boot-starter</artifactId>
-    <version>1.0.0</version>
+    <groupId>io.github.9527summer</groupId>
+    <artifactId>tbox-dapper-spring-boot-starter</artifactId>
 </dependency>
 ```
 

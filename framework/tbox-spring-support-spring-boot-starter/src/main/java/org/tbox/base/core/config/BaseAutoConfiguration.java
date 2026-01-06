@@ -1,11 +1,13 @@
 package org.tbox.base.core.config;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.tbox.base.core.config.properties.TboxBaseProperties;
 import org.tbox.base.core.context.ApplicationContextHolder;
+import org.tbox.base.core.exception.handler.DefaultGlobalExceptionHandler;
 
 /**
  * TBox基础组件自动配置类
@@ -26,7 +28,14 @@ public class BaseAutoConfiguration {
      * @return ApplicationContextHolder实例
      */
     @Bean
+    @ConditionalOnMissingBean
     public ApplicationContextHolder applicationContextHolder() {
         return new ApplicationContextHolder();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public DefaultGlobalExceptionHandler defaultGlobalExceptionHandler() {
+        return new DefaultGlobalExceptionHandler();
     }
 }

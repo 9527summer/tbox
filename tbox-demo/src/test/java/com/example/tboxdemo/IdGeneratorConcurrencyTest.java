@@ -1,7 +1,11 @@
 package com.example.tboxdemo;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.tbox.distributedid.core.Snowflake;
+import org.tbox.distributedid.core.TimeSnowflake;
+import org.tbox.distributedid.manage.DefaultIdGenerator;
+import org.tbox.distributedid.manage.TimeIdGenerator;
 import org.tbox.distributedid.utils.IdUtils;
 
 import java.util.Collections;
@@ -17,8 +21,13 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * 分布式ID生成器并发安全性测试
  */
-@SpringBootTest
 public class IdGeneratorConcurrencyTest {
+
+    @BeforeAll
+    static void initGeneratorForTests() {
+        DefaultIdGenerator.setSnowflake(new Snowflake(1));
+        TimeIdGenerator.setSnowflake(new TimeSnowflake(1));
+    }
 
     /**
      * 测试多线程环境下是否会生成重复ID

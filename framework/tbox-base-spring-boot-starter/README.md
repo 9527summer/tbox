@@ -217,8 +217,8 @@ ID生成器使用SLF4J记录日志，支持以下日志级别：
 
 ```xml
 <dependency>
-    <groupId>org.tbox</groupId>
-    <artifactId>base-spring-boot-starter</artifactId>
-    <version>1.0.0</version>
+    <groupId>io.github.9527summer</groupId>
+    <artifactId>tbox-base-spring-boot-starter</artifactId>
+    <version>${tbox.version}</version>
 </dependency>
 ``` 
