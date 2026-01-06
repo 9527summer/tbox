@@ -8,9 +8,9 @@ TBox 是一个轻量级的 Java 企业应用开发框架，提供开箱即用的
 - **模块化设计**：按功能划分多个独立Starter，可按需引入
 - **分布式追踪**：支持 HTTP 请求、消息队列、定时任务等链路打点（优先复用 Spring Boot 3 的观测/追踪生态）
 - **幂等性控制**：提供简单易用的幂等注解，支持多种幂等策略
-- **分布式锁工具**：基于Redis的分布式锁实现，支持可重入锁和自动续期
+- **分布式锁工具**：基于 Redis/Redisson 的分布式锁实现，支持可重入锁和自动续期
 - **分布式 ID / 兑换编号**：提供 Snowflake、时间型 ID、Base62 兑换码
-- **性能监控**：与 Spring Boot Actuator/Micrometer 集成的指标采集
+- **性能监控**：可配合 Spring Boot Actuator/Micrometer 采集指标与追踪（按需引入）
 - **Spring生态兼容**：完全兼容Spring Boot生态系统，可与各种组件无缝集成
 
 ## 项目结构
@@ -33,13 +33,11 @@ tbox/
 
 ### tbox-base-spring-boot-starter
 
-基础功能模块，提供常用工具类和核心抽象：
+基础“核心层”模块（偏通用类型与工具，尽量不依赖 Spring Web/Redis 等重量级组件）：
 
-- **统一响应**：标准化的API响应格式
-- **异常处理**：全局异常处理机制
-- **分布式锁**：基于Redis的分布式锁实现
-- **缓存工具**：Redis缓存抽象和工具类
-- **工具集**：JSON处理、ID生成、断言等工具类
+- **统一响应**：`Result` / `Results`
+- **基础异常体系**：`BaseException` / `BizException` / `SysException`
+- **工具集**：`JsonUtils`、`AssertUtils`、`DateTimeConstants`
 
 ### tbox-spring-support-spring-boot-starter
 
@@ -81,6 +79,7 @@ Spring 相关增强模块（偏“应用层支撑”）：
 Redis 相关能力模块：
 
 - **Redis 工具**：缓存、分布式锁等常用能力
+- **序列化（可选）**：`RedisSerializerConfig`（需业务侧手动 `@Import`，避免与业务/Redisson 冲突）
 - **AOP 限流**：`@RateLimit`（滑动窗口 / 令牌桶），默认按 URL 维度限流
 
 ### tbox-dependencies
@@ -144,7 +143,7 @@ tbox:
     
   # 幂等控制配置
   idempotent:
-      timeout: 5
+    timeout: 5
 ```
 
 ### 3. 使用分布式追踪
@@ -172,35 +171,12 @@ public class OrderController {
 ### 5. 使用分布式锁
 
 ```java
-// 简单锁
-String lockKey = "order:process:" + orderId;
-try {
-    if (RedisLockUtils.lock(lockKey, 10, TimeUnit.SECONDS)) {
-        // 获取锁成功，处理业务逻辑
-        processOrder(orderId);
-    } else {
-        // 获取锁失败
-        throw new BizException("订单正在处理中，请稍后再试");
-    }
-} finally {
-    // 释放锁
-    RedisLockUtils.unlock(lockKey);
-}
+import org.tbox.base.redis.utils.LockUtils;
 
-// 带请求ID的锁（可以验证锁的持有者）
-String requestId = UUID.randomUUID().toString();
-try {
-    if (RedisLockUtils.lock(lockKey, requestId, 10, TimeUnit.SECONDS)) {
-        // 获取锁成功，处理业务逻辑
-        processOrder(orderId);
-    } else {
-        // 获取锁失败
-        throw new BizException("订单正在处理中，请稍后再试");
-    }
-} finally {
-    // 释放锁（验证锁的持有者）
-    RedisLockUtils.unlock(lockKey, requestId);
-}
+String lockKey = "order:process:" + orderId;
+LockUtils.executeWithLock(lockKey, 3, TimeUnit.SECONDS, () -> {
+    processOrder(orderId);
+});
 ```
 
 ## 高级配置
@@ -225,7 +201,7 @@ tbox:
 
 ## 监控与管理
 
-TBox集成了Spring Boot Actuator，可以通过Actuator端点查看和管理系统状态：
+如需健康检查/指标/Prometheus 等能力，请引入并配置 Spring Boot Actuator（例如：引入 `tbox-dapper-spring-boot-starter` 或业务侧自行引入 `spring-boot-starter-actuator`），然后通过 Actuator 端点查看系统状态：
 
 ```yaml
 management:
